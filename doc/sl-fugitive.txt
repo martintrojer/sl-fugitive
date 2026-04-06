@@ -1,0 +1,35 @@
+*sl-fugitive.txt*  Sapling integration for Neovim
+
+==============================================================================
+INTRODUCTION                                    *sl-fugitive*
+
+sl-fugitive is a Sapling-first Neovim plugin inspired by vim-fugitive and the
+power-user editing model explored in jj-fugitive.
+
+==============================================================================
+COMMANDS                                        *sl-fugitive-commands*
+
+:S                      Open the default surface
+:S log                  Open the log view
+:S status               Open the status view
+:S diff [file]          Open the diff view
+:S review               Open the shared AI review buffer
+:S annotate [file]      Open the annotate view
+:S bookmark             Open the bookmark view
+:S browse [remote]      Open the current file or commit on a forge
+:S describe [rev]       Edit a Sapling commit message
+:S commit               Create a new Sapling commit from the working copy
+:SBrowse                Same as :S browse
+
+==============================================================================
+REVIEW BUFFER                                   *sl-fugitive-review*
+
+The shared AI review packet buffer is already live and is intended to remain a
+core workflow as the rest of the plugin becomes more Sapling-native.
+
+==============================================================================
+ROADMAP                                         *sl-fugitive-roadmap*
+
+1. Deepen smartlog around Sapling-native actions like metaedit, hide, and amend-to.
+2. Make review packets carry richer changeset metadata from show and diff flows.
+3. Keep hardening the live views against real Sapling workflows.
