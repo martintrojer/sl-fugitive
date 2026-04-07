@@ -9,13 +9,12 @@ end
 local function open_editor(buffer_name, initial_text, help_lines, save_fn)
   local ui = require("sl-fugitive.ui")
 
-  local bufnr = ui.create_scratch_buffer({
-    name = buffer_name,
-    buftype = "acwrite",
-    filetype = "gitcommit",
-    modifiable = true,
-    bufhidden = "hide",
-  })
+  local bufnr = vim.api.nvim_create_buf(false, false)
+  vim.bo[bufnr].buftype = "acwrite"
+  vim.bo[bufnr].filetype = "gitcommit"
+  vim.bo[bufnr].swapfile = false
+  vim.bo[bufnr].bufhidden = "hide"
+  pcall(vim.api.nvim_buf_set_name, bufnr, buffer_name)
 
   local lines = {}
   for _, line in ipairs(help_lines) do

@@ -25,16 +25,23 @@ local function parse_annotation_line(line)
   if not line then
     return nil
   end
+  -- Try verbose format: user hash date: content
   local user, node, date, content = line:match("^(%S+)%s+([0-9a-f]+)%s+(%d%d%d%d%-%d%d%-%d%d):%s?(.*)$")
-  if not node then
-    return nil
+  if node then
+    return { user = user, node = node, date = date, content = content or "" }
   end
-  return {
-    user = user,
-    node = node,
-    date = date,
-    content = content or "",
-  }
+  -- Sapling format with -c -u: user hash: content
+  local user_only
+  user_only, node, content = line:match("^(%S+)%s+([0-9a-f]+):%s?(.*)$")
+  if node then
+    return { user = user_only, node = node, content = content or "" }
+  end
+  -- Bare hash: content
+  node, content = line:match("^([0-9a-f]+):%s?(.*)$")
+  if node then
+    return { node = node, content = content or "" }
+  end
+  return nil
 end
 
 function M.show(filename, rev)
@@ -46,7 +53,7 @@ function M.show(filename, rev)
     return false
   end
 
-  local args = { "annotate", filename }
+  local args = { "annotate", "-c", "-u", filename }
   if rev and rev ~= "" then
     table.insert(args, 2, "-r")
     table.insert(args, 3, rev)
@@ -65,7 +72,13 @@ function M.show(filename, rev)
     if line ~= "" then
       local parsed = parse_annotation_line(line)
       if parsed then
-        table.insert(annotations, string.format("%-12s %-12s %s", parsed.node, parsed.user, parsed.date))
+        local ann
+        if parsed.user then
+          ann = string.format("%-12s %s", parsed.node, parsed.user)
+        else
+          ann = parsed.node
+        end
+        table.insert(annotations, ann)
         table.insert(line_nodes, parsed.node)
         table.insert(source_lines, parsed.content)
       else
@@ -79,10 +92,12 @@ function M.show(filename, rev)
   local ann_buf = ui.create_scratch_buffer({
     name = "sl-annotate: " .. filename .. (rev and (" @ " .. rev) or ""),
     modifiable = true,
+    bufhidden = "hide",
   })
   local src_buf = ui.create_scratch_buffer({
     name = filename .. (rev and (" @ " .. rev) or ""),
     modifiable = true,
+    bufhidden = "hide",
   })
 
   vim.api.nvim_buf_set_lines(ann_buf, 0, -1, false, annotations)
@@ -107,15 +122,26 @@ function M.show(filename, rev)
     vim.cmd("setlocal nowrap nonumber norelativenumber")
   end)
 
-  ui.open_pane({ split_cmd = "vsplit" })
-  vim.api.nvim_set_current_buf(ann_buf)
-  vim.api.nvim_win_set_width(0, math.min(40, vim.o.columns / 3))
-  vim.cmd("wincmd l")
+  -- Remember original buffer so we can restore on close
+  local orig_buf = vim.api.nvim_get_current_buf()
+  -- Set source in current window, then open annotation as a left vsplit
   vim.api.nvim_set_current_buf(src_buf)
-  vim.cmd("setlocal scrollbind")
-  vim.cmd("wincmd h")
+  vim.cmd("vsplit")
+  vim.cmd("wincmd H")
+  vim.api.nvim_set_current_buf(ann_buf)
+
+  -- Size the annotation window to fit content
+  local max_width = 0
+  for _, ann in ipairs(annotations) do
+    if #ann > max_width then max_width = #ann end
+  end
+  vim.api.nvim_win_set_width(0, math.min(max_width + 1, 60))
+
+  vim.cmd("setlocal scrollbind nowrap nonumber norelativenumber")
+  vim.cmd("wincmd l")
   vim.cmd("setlocal scrollbind")
   vim.cmd("syncbind")
+  vim.cmd("wincmd h")
 
   local function current_node()
     local line_nr = vim.api.nvim_win_get_cursor(0)[1]
@@ -130,7 +156,16 @@ function M.show(filename, rev)
       pcall(vim.api.nvim_win_close, ann_win, true)
     end
     if src_win ~= -1 then
-      pcall(vim.api.nvim_win_close, src_win, true)
+      vim.api.nvim_win_call(src_win, function()
+        vim.cmd("setlocal noscrollbind")
+      end)
+      if vim.api.nvim_buf_is_valid(orig_buf) then
+        vim.api.nvim_win_set_buf(src_win, orig_buf)
+      end
+      pcall(vim.api.nvim_set_current_win, src_win)
+    end
+    if vim.api.nvim_buf_is_valid(src_buf) then
+      pcall(vim.api.nvim_buf_delete, src_buf, { force = true })
     end
   end
 

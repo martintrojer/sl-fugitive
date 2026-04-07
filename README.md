@@ -36,23 +36,39 @@ point is to lean into Sapling’s strengths, especially:
 | `:S pull [args]` | Pass through to Sapling |
 | `:S <any>` | Pass through to Sapling |
 
+## Smartlog Keymaps
+
+| Key | Action |
+|-----|--------|
+| `<CR>` | Show changeset detail |
+| `d` | Show diff for changeset |
+| `go` | Goto selected commit |
+| `ra` | Absorb working changes into the stack |
+| `rm` | Edit selected commit message |
+| `rr` | Rebase selected commit onto a destination |
+| `ri` | Interactive rebase from selected commit |
+| `rs` | Split selected commit |
+| `rt` | Amend working changes into selected commit |
+| `rf` | Fold linearly from current commit to selected |
+| `rh` | Hide selected commit and descendants |
+| `rR` | Restack current stack |
+| `rc` | Continue interrupted rebase |
+| `rA` | Abort interrupted rebase |
+| `cR` | Add review comment (in diff/show buffers) |
+| `gR` | Open review buffer |
+| `g?` | Help |
+
 ## Configuration
 
 ```lua
 require("sl-fugitive").setup({
   default_command = "log",
-  open_mode = "split",
-  command = "/var/home/martintrojer/sl/sl",
+  open_mode = "split",   -- "split" or "tab"
+  command = "sl",         -- path to Sapling CLI
 })
 ```
 
-If `sl` works directly in your shell, `command = "sl"` is also fine.
+## Dependencies
 
-## Direction
-
-The next major work should lean into Sapling specifically:
-- deepen smartlog actions like `metaedit`, `hide`, and `amend --to`
-- enrich review packets with changeset metadata from show and diff flows
-- keep hardening the live views against real Sapling workflows
-
-The plugin should feel closer to `jj-fugitive` than to a generic Mercurial wrapper.
+- Neovim 0.10+
+- Sapling CLI (`sl`) available in your `$PATH`

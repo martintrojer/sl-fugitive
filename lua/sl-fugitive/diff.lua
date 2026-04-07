@@ -70,11 +70,34 @@ local function setup_diff_keymaps(bufnr, filename)
     ui.map(bufnr, "n", "o", function()
       vim.cmd("edit " .. vim.fn.fnameescape(filename))
     end)
-
-    ui.map(bufnr, "n", "D", function()
-      M.show_sidebyside(filename)
-    end)
   end
+
+  ui.map(bufnr, "n", "D", function()
+    if filename then
+      M.show_sidebyside(filename)
+      return
+    end
+    -- Multi-file diff: parse filenames and let user pick
+    local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+    local files = {}
+    for _, line in ipairs(lines) do
+      local f = line:match("^diff %-%-git a/.+ b/(.+)$")
+      if f and not vim.tbl_contains(files, f) then
+        table.insert(files, f)
+      end
+    end
+    if #files == 0 then
+      ui.warn("No files found in diff")
+    elseif #files == 1 then
+      M.show_sidebyside(files[1])
+    else
+      vim.ui.select(files, { prompt = "Side-by-side diff for:" }, function(choice)
+        if choice then
+          M.show_sidebyside(choice)
+        end
+      end)
+    end
+  end)
 
   ui.map(bufnr, "n", "g?", function()
     ui.help_popup("sl-fugitive Diff", {

@@ -3,37 +3,67 @@ local M = {}
 local ansi = require("sl-fugitive.ansi")
 local ui = require("sl-fugitive.ui")
 
-local BUF_PATTERN = "^jj%-log$|^hg%-log$|^sl%-log$"
+local BUF_PATTERN = "sl%-log"
 local BUF_NAME = "sl-log"
 
-local function get_log_output()
-  return require("sl-fugitive").run_vcs({
-    "smartlog",
-    "-T",
-    "{node|short} {desc|firstline}\\n",
-  })
+local function workspace_status()
+  local init = require("sl-fugitive")
+
+  -- Check for unresolved conflicts
+  local conflicts = init.run_vcs({ "resolve", "--list" })
+  if conflicts and conflicts:match("^U ") then
+    local count = 0
+    for _ in conflicts:gmatch("\nU ") do count = count + 1 end
+    if conflicts:match("^U ") then count = count + 1 end
+    return "# CONFLICTS: " .. count .. " unresolved — sl resolve"
+  end
+
+  -- Check working copy status
+  local status = init.run_vcs({ "status" })
+  if not status or status:match("^%s*$") then
+    return "# Working copy clean"
+  end
+
+  local m, a, r, u = 0, 0, 0, 0
+  for line in status:gmatch("[^\n]+") do
+    local code = line:match("^(%S)")
+    if code == "M" then m = m + 1
+    elseif code == "A" then a = a + 1
+    elseif code == "R" or code == "!" then r = r + 1
+    elseif code == "?" then u = u + 1
+    end
+  end
+
+  local parts = {}
+  if m > 0 then table.insert(parts, m .. " modified") end
+  if a > 0 then table.insert(parts, a .. " added") end
+  if r > 0 then table.insert(parts, r .. " removed") end
+  if u > 0 then table.insert(parts, u .. " untracked") end
+  return "# Working copy: " .. table.concat(parts, ", ")
 end
 
-local function format_lines(output)
-  local lines = {
+local function log_header()
+  return {
     "",
     "# sl Smartlog",
     "# Press g? for help",
+    workspace_status(),
     "",
   }
-  for _, line in ipairs(vim.split(output or "", "\n", { plain = true })) do
-    if line ~= "" then
-      table.insert(lines, line)
-    end
-  end
-  return lines
+end
+
+local function get_log_output()
+  return require("sl-fugitive").run_vcs({
+    "sl",
+    "--color=always",
+  })
 end
 
 local function node_from_line(line)
   if not line then
     return nil
   end
-  return line:match("%f[%x]([0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f])%f[^%x]")
+  return line:match("%f[%x]([0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]+)%f[^%x]")
 end
 
 local function selected_node()
@@ -136,7 +166,10 @@ local function run_rebase(node)
 end
 
 local function run_interactive_rebase(node)
-  require("sl-fugitive").run_vcs_terminal({ "rebase", "-i", "-s", node })
+  local init = require("sl-fugitive")
+  -- Go to the top of the stack so all commits from node to tip are included
+  init.run_vcs({ "next", "--top", "-q" })
+  init.run_vcs_terminal({ "rebase", "-i", "-s", node, "-d", node .. "^" })
 end
 
 local function run_split(node)
@@ -147,11 +180,16 @@ local function run_fold_from(node)
   if not ui.confirm("Fold linearly from current commit to " .. node .. "?") then
     return
   end
-  local result = require("sl-fugitive").run_vcs({ "fold", "--from", "-r", node })
-  if result then
-    ui.info("Folded from current commit to " .. node)
-    M.refresh()
-  end
+  vim.ui.input({ prompt = "Folded commit message: " }, function(message)
+    if not message or message:match("^%s*$") then
+      return
+    end
+    local result = require("sl-fugitive").run_vcs({ "fold", "--from", "-r", node, "-m", message })
+    if result then
+      ui.info("Folded from current commit to " .. node)
+      require("sl-fugitive").refresh_views()
+    end
+  end)
 end
 
 local function run_restack()
@@ -404,8 +442,8 @@ local function setup_keymaps(bufnr)
       "  ra       Absorb current working changes into the stack",
       "  rm       Edit selected commit metadata/message",
       "  rr       Rebase selected commit onto a destination",
-      "  ri       Interactive rebase from selected commit",
-      "  rs       Split selected commit",
+      "  ri       Interactive rebase from selected commit (:q to cancel)",
+      "  rs       Split selected commit (:q to cancel)",
       "  rt       Amend working changes into selected commit",
       "  rf       Fold linearly from current commit to selected commit",
       "  rh       Hide selected commit and descendants",
@@ -435,7 +473,7 @@ function M.refresh()
   if not output then
     return
   end
-  ui.set_buf_lines(bufnr, format_lines(output))
+  ansi.update_colored_buffer(bufnr, output, log_header(), { prefix = "SlLog" })
 end
 
 function M.show()
@@ -444,17 +482,16 @@ function M.show()
     return
   end
 
-  local lines = format_lines(output)
   local bufnr = ui.find_buf(BUF_PATTERN)
   if bufnr then
-    ui.set_buf_lines(bufnr, lines)
+    ansi.update_colored_buffer(bufnr, output, log_header(), { prefix = "SlLog" })
   else
-    bufnr = ui.create_scratch_buffer({ name = BUF_NAME })
-    ui.set_buf_lines(bufnr, lines)
+    bufnr = ansi.create_colored_buffer(output, BUF_NAME, log_header(), { prefix = "SlLog" })
   end
 
   setup_keymaps(bufnr)
   ui.ensure_visible(bufnr)
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   for i, line in ipairs(lines) do
     if node_from_line(line) then
       pcall(vim.api.nvim_win_set_cursor, 0, { i, 0 })

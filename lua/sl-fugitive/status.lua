@@ -1,6 +1,6 @@
 local M = {}
 
-local BUF_PATTERN = "^jj%-status$|^hg%-status$|^sl%-status$"
+local BUF_PATTERN = "sl%-status"
 local BUF_NAME = "sl-status"
 
 local function get_status()
@@ -310,24 +310,19 @@ function M.show()
   setup_keymaps(bufnr)
 
   vim.api.nvim_buf_call(bufnr, function()
-    vim.cmd("syntax clear HgStatusHeader")
-    vim.cmd("syntax clear HgStatusModified")
-    vim.cmd("syntax clear HgStatusAdded")
-    vim.cmd("syntax clear HgStatusRemoved")
-    vim.cmd("syntax clear HgStatusMissing")
-    vim.cmd("syntax clear HgStatusUnknown")
-    vim.cmd("syntax match HgStatusHeader '^#.*'")
-    vim.cmd("syntax match HgStatusModified '^M .*'")
-    vim.cmd("syntax match HgStatusAdded '^[ARC] .*'")
-    vim.cmd("syntax match HgStatusRemoved '^! .*'")
-    vim.cmd("syntax match HgStatusUnknown '^? .*'")
-    vim.cmd("syntax match HgStatusCopySource '^  .*'")
-    vim.cmd("highlight default link HgStatusHeader Comment")
-    vim.cmd("highlight default link HgStatusModified DiffChange")
-    vim.cmd("highlight default link HgStatusAdded DiffAdd")
-    vim.cmd("highlight default link HgStatusRemoved DiffDelete")
-    vim.cmd("highlight default link HgStatusUnknown Directory")
-    vim.cmd("highlight default link HgStatusCopySource Comment")
+    vim.cmd("silent! syntax clear SlStatusHeader SlStatusModified SlStatusAdded SlStatusRemoved SlStatusUnknown SlStatusCopySource")
+    vim.cmd("syntax match SlStatusHeader '^#.*'")
+    vim.cmd("syntax match SlStatusModified '^M .*'")
+    vim.cmd("syntax match SlStatusAdded '^[ARC] .*'")
+    vim.cmd("syntax match SlStatusRemoved '^! .*'")
+    vim.cmd("syntax match SlStatusUnknown '^? .*'")
+    vim.cmd("syntax match SlStatusCopySource '^  .*'")
+    vim.cmd("highlight default link SlStatusHeader Comment")
+    vim.cmd("highlight default link SlStatusModified DiffChange")
+    vim.cmd("highlight default link SlStatusAdded DiffAdd")
+    vim.cmd("highlight default link SlStatusRemoved DiffDelete")
+    vim.cmd("highlight default link SlStatusUnknown Directory")
+    vim.cmd("highlight default link SlStatusCopySource Comment")
   end)
 
   ui.ensure_visible(bufnr)

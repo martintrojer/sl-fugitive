@@ -1,6 +1,6 @@
 local M = {}
 
-local BUF_PATTERN = "^jj%-bookmarks$|^hg%-bookmarks$|^sl%-bookmarks$"
+local BUF_PATTERN = "sl%-bookmarks"
 local BUF_NAME = "sl-bookmarks"
 
 local function get_bookmarks()
@@ -18,7 +18,7 @@ local function node_from_line(line)
   if not line then
     return nil
   end
-  return line:match("([0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f])%s*$")
+  return line:match("([0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]+)%s*$")
 end
 
 local function run_and_refresh(args, msg)

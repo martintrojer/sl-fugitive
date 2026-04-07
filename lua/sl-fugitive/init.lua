@@ -3,7 +3,7 @@ local M = {}
 M.config = {
   default_command = "log",
   open_mode = "split",
-  command = "/var/home/martintrojer/sl/sl",
+  command = "sl",
 }
 
 local last_repo_root = nil
@@ -28,7 +28,7 @@ function M.setup(opts)
 end
 
 local function repo_markers()
-  return { ".sl", ".git/sl" }
+  return { ".sl", ".hg", ".git/sl" }
 end
 
 local function find_repo_root()
@@ -73,14 +73,10 @@ local function command_name()
 end
 
 local function run_with_feedback(cmd, opts, label)
-  local proc = vim.system(cmd, opts)
-  local result = proc:wait(200)
-  if not result then
-    vim.api.nvim_echo({ { label .. ": running...", "Comment" } }, false, {})
-    vim.cmd("redraw")
-    result = proc:wait()
-    vim.api.nvim_echo({ { "" } }, false, {})
-  end
+  vim.api.nvim_echo({ { label .. ": running...", "Comment" } }, false, {})
+  vim.cmd("redraw")
+  local result = vim.system(cmd, opts):wait()
+  vim.api.nvim_echo({ { "" } }, false, {})
   return result
 end
 
@@ -142,33 +138,58 @@ function M.run_vcs_terminal(args, opts)
     return
   end
 
-  vim.notify("sl terminal mode", vim.log.levels.INFO)
+  local prev_tab = vim.api.nvim_get_current_tabpage()
   vim.cmd("tabnew")
+  local term_tab = vim.api.nvim_get_current_tabpage()
   local term_buf = vim.api.nvim_get_current_buf()
 
-  local env_prefix = ""
+  local cmd = executable .. " " .. args_str
   if opts and opts.env then
     local parts = {}
     for key, value in pairs(opts.env) do
       table.insert(parts, key .. "=" .. vim.fn.shellescape(value))
     end
     table.sort(parts)
-    env_prefix = table.concat(parts, " ") .. " "
+    cmd = table.concat(parts, " ") .. " " .. cmd
   end
 
-  vim.fn.termopen(env_prefix .. executable .. " " .. args_str, {
+  local function close_term_tab()
+    vim.schedule(function()
+      if vim.api.nvim_tabpage_is_valid(term_tab) then
+        local wins = vim.api.nvim_tabpage_list_wins(term_tab)
+        for _, win in ipairs(wins) do
+          if vim.api.nvim_win_is_valid(win) then
+            pcall(vim.api.nvim_win_close, win, true)
+          end
+        end
+      end
+      if vim.api.nvim_tabpage_is_valid(prev_tab) then
+        pcall(vim.api.nvim_set_current_tabpage, prev_tab)
+      end
+    end)
+  end
+
+  vim.notify("Terminal mode — :q to cancel", vim.log.levels.INFO)
+  local job_id = vim.fn.termopen(cmd, {
     cwd = repo_root,
     on_exit = function(_, exit_code)
-      vim.schedule(function()
-        if vim.api.nvim_buf_is_valid(term_buf) then
-          vim.api.nvim_buf_delete(term_buf, { force = true })
-        end
-        if exit_code == 0 then
+      if exit_code == 0 then
+        close_term_tab()
+        vim.schedule(function()
           M.refresh_views()
-        end
-      end)
+        end)
+      else
+        vim.schedule(function()
+          vim.notify("Terminal exited with code " .. exit_code .. " — :q to close", vim.log.levels.WARN)
+        end)
+      end
     end,
   })
+  if job_id <= 0 then
+    ui.err("Failed to start terminal (job_id=" .. job_id .. "): " .. cmd)
+    close_term_tab()
+    return
+  end
   vim.cmd("startinsert")
 end
 

@@ -22,14 +22,62 @@ COMMANDS                                        *sl-fugitive-commands*
 :SBrowse                Same as :S browse
 
 ==============================================================================
-REVIEW BUFFER                                   *sl-fugitive-review*
+SMARTLOG KEYMAPS                                *sl-fugitive-log-keymaps*
 
-The shared AI review packet buffer is already live and is intended to remain a
-core workflow as the rest of the plugin becomes more Sapling-native.
+<CR>      Show changeset detail
+d         Show diff for changeset
+go        Goto selected commit
+ra        Absorb working changes into the stack
+rm        Edit selected commit message (metaedit)
+rr        Rebase selected commit onto a prompted destination
+ri        Interactive rebase from selected commit (:q to cancel)
+rs        Split selected commit (:q to cancel)
+rt        Amend working changes into selected commit
+rf        Fold linearly from current commit to selected
+rh        Hide selected commit and descendants
+rR        Restack current stack
+rc        Continue interrupted rebase
+rA        Abort interrupted rebase
+cR        Add review comment (in diff/show buffers)
+gR        Open review buffer
+g?        Help
 
 ==============================================================================
-ROADMAP                                         *sl-fugitive-roadmap*
+STATUS KEYMAPS                                  *sl-fugitive-status-keymaps*
 
-1. Deepen smartlog around Sapling-native actions like metaedit, hide, and amend-to.
-2. Make review packets carry richer changeset metadata from show and diff flows.
-3. Keep hardening the live views against real Sapling workflows.
+<CR>      Open file
+o         Open file in split
+=         Toggle inline diff
+cR        Add review comment from inline diff
+gR        Open review buffer
+d         Show diff for file
+D         Side-by-side diff
+x         Revert file to parent revision
+
+==============================================================================
+BOOKMARK KEYMAPS                                *sl-fugitive-bookmark-keymaps*
+
+c         Create bookmark
+d         Delete bookmark
+m         Move bookmark to revision
+r         Rename bookmark
+g         Goto bookmark commit
+p         Push bookmark to remote
+
+==============================================================================
+REVIEW BUFFER                                   *sl-fugitive-review*
+
+The shared AI review packet buffer collects review items from diff, show, and
+status views via `cR`. Each item includes revision, file, hunk context, and a
+reviewer comment. Open the review buffer with `gR` from any view.
+
+==============================================================================
+CONFIGURATION                                   *sl-fugitive-config*
+
+>lua
+  require("sl-fugitive").setup({
+    default_command = "log",
+    open_mode = "split",   -- "split" or "tab"
+    command = "sl",         -- path to Sapling CLI
+  })
+<
