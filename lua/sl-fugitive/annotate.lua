@@ -26,7 +26,8 @@ local function parse_annotation_line(line)
     return nil
   end
   -- Try verbose format: user hash date: content
-  local user, node, date, content = line:match("^(%S+)%s+([0-9a-f]+)%s+(%d%d%d%d%-%d%d%-%d%d):%s?(.*)$")
+  local user, node, date, content =
+    line:match("^(%S+)%s+([0-9a-f]+)%s+(%d%d%d%d%-%d%d%-%d%d):%s?(.*)$")
   if node then
     return { user = user, node = node, date = date, content = content or "" }
   end
@@ -133,7 +134,9 @@ function M.show(filename, rev)
   -- Size the annotation window to fit content
   local max_width = 0
   for _, ann in ipairs(annotations) do
-    if #ann > max_width then max_width = #ann end
+    if #ann > max_width then
+      max_width = #ann
+    end
   end
   vim.api.nvim_win_set_width(0, math.min(max_width + 1, 60))
 
@@ -176,9 +179,11 @@ function M.show(filename, rev)
     end
   end)
 
-  ui.map(ann_buf, "n", "gR", function()
-    require("sl-fugitive.review").show()
-  end)
+  if init.review_config then
+    ui.map(ann_buf, "n", "gR", function()
+      require("redline").show(init.review_config)
+    end)
+  end
 
   ui.map(ann_buf, "n", "q", close_annotate)
 

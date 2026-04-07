@@ -2,8 +2,8 @@ local M = {}
 
 local ansi = require("sl-fugitive.ansi")
 
-local function set_review_context(bufnr, ctx)
-  pcall(vim.api.nvim_buf_set_var, bufnr, "jj_review_context", ctx)
+local function set_buffer_context(bufnr, ctx)
+  pcall(vim.api.nvim_buf_set_var, bufnr, "sl_buffer_context", ctx)
 end
 
 local function working_copy_file(filename)
@@ -32,7 +32,7 @@ local function get_diff(file, rev)
   return init.run_vcs(args)
 end
 
-local function setup_diff_keymaps(bufnr, filename)
+local function setup_diff_keymaps(bufnr, filename, review_ctx)
   local ui = require("sl-fugitive.ui")
   if ui.buf_var(bufnr, "sl_diff_keymaps_set", false) then
     return
@@ -43,13 +43,15 @@ local function setup_diff_keymaps(bufnr, filename)
     vim.cmd(ui.close_cmd())
   end)
 
-  ui.map(bufnr, "n", "cR", function()
-    require("sl-fugitive.review").comment_current_line(bufnr)
-  end)
-
-  ui.map(bufnr, "n", "gR", function()
-    require("sl-fugitive.review").show()
-  end)
+  local init = require("sl-fugitive")
+  if init.review_config then
+    ui.map(bufnr, "n", "cR", function()
+      require("redline").comment_unified_diff(init.review_config, bufnr, review_ctx)
+    end)
+    ui.map(bufnr, "n", "gR", function()
+      require("redline").show(init.review_config)
+    end)
+  end
 
   ui.map(bufnr, "n", "gl", function()
     vim.cmd(ui.close_cmd())
@@ -169,14 +171,14 @@ function M.show(opts)
     bufnr = ansi.create_colored_buffer(output, bufname, header, { prefix = "SlDiff" })
   end
 
-  set_review_context(bufnr, {
-    kind = "unified_diff",
+  local ctx = {
     source = rev and "commit diff" or "working copy diff",
     file = filename,
     rev = rev or ".",
     node = rev,
-  })
-  setup_diff_keymaps(bufnr, filename)
+  }
+  set_buffer_context(bufnr, ctx)
+  setup_diff_keymaps(bufnr, filename, ctx)
   ui.ensure_visible(bufnr)
   ui.set_statusline(bufnr, "sl-diff: " .. file_desc)
 end

@@ -9,14 +9,7 @@ point is to lean into Sapling’s strengths, especially:
 - smartlog-style history as the main hub
 - stack-aware mutation workflows
 - strong diff/review navigation
-- an AI review packet workflow that fits code-review-heavy use
-
-## Current State
-
-- The public plugin name is `sl-fugitive`.
-- The entry commands are `:S` and `:SBrowse`.
-- The active live surfaces are `log`, `status`, `diff`, `bookmark`, `annotate`, `browse`, `describe`, `commit`, and the shared review buffer.
-- The remaining unfinished work is Sapling-native depth and polish rather than basic surface scaffolding.
+- **AI review workflow** (optional, via [redline.nvim](https://github.com/martintrojer/redline.nvim)) — capture comments from unified diffs, show buffers, and status inline diffs into a shared AI-ready review packet
 
 ## Commands
 
@@ -54,8 +47,6 @@ point is to lean into Sapling’s strengths, especially:
 | `rR` | Restack current stack |
 | `rc` | Continue interrupted rebase |
 | `rA` | Abort interrupted rebase |
-| `cR` | Add review comment (in diff/show buffers) |
-| `gR` | Open review buffer |
 | `g?` | Help |
 
 ## Configuration
@@ -68,7 +59,37 @@ require("sl-fugitive").setup({
 })
 ```
 
-## Dependencies
+## Requirements
 
 - Neovim 0.10+
-- Sapling CLI (`sl`) available in your `$PATH`
+- [Sapling](https://sapling-scm.com/) installed and available in PATH
+
+### Optional
+
+- [redline.nvim](https://github.com/martintrojer/redline.nvim) — AI review
+  comment capture (`cR`/`gR` keymaps). Without it, everything else works
+  normally; review keymaps just won't appear.
+
+## Installation
+
+### [lazy.nvim](https://github.com/folke/lazy.nvim)
+
+```lua
+{ "martintrojer/sl-fugitive" }
+-- For AI review support:
+-- { "martintrojer/sl-fugitive", dependencies = { "martintrojer/redline.nvim" } }
+```
+
+## AI Review Workflow
+
+Requires [redline.nvim](https://github.com/martintrojer/redline.nvim) (optional
+dependency). Without it, review keymaps are not mapped and everything else works
+normally.
+
+From unified diff buffers, commit show buffers, and expanded status inline
+diffs:
+
+```
+  cR        Add review comment for the current diff line
+  gR        Open the shared review buffer
+```

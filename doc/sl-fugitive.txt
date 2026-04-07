@@ -38,8 +38,6 @@ rh        Hide selected commit and descendants
 rR        Restack current stack
 rc        Continue interrupted rebase
 rA        Abort interrupted rebase
-cR        Add review comment (in diff/show buffers)
-gR        Open review buffer
 g?        Help
 
 ==============================================================================
@@ -67,9 +65,29 @@ p         Push bookmark to remote
 ==============================================================================
 REVIEW BUFFER                                   *sl-fugitive-review*
 
-The shared AI review packet buffer collects review items from diff, show, and
-status views via `cR`. Each item includes revision, file, hunk context, and a
-reviewer comment. Open the review buffer with `gR` from any view.
+Requires redline.nvim (optional dependency):
+https://github.com/martintrojer/redline.nvim
+
+Without it, review keymaps are not mapped and everything else works normally.
+
+From unified diff buffers, commit show buffers, and expanded status inline
+diffs:
+
+  cR        Add review comment for the current diff line
+  gR        Open the shared review buffer
+
+Each review item includes revision, file, hunk context, and a reviewer
+comment. The review buffer is shared across all views and formatted as an
+AI-ready review packet.
+
+==============================================================================
+REQUIREMENTS                                    *sl-fugitive-requirements*
+
+- Neovim 0.10+
+- Sapling (https://sapling-scm.com/) installed and available in PATH
+
+Optional:~
+- redline.nvim — AI review comment capture (`cR`/`gR` keymaps)
 
 ==============================================================================
 CONFIGURATION                                   *sl-fugitive-config*
@@ -80,4 +98,10 @@ CONFIGURATION                                   *sl-fugitive-config*
     open_mode = "split",   -- "split" or "tab"
     command = "sl",         -- path to Sapling CLI
   })
+<
+
+For AI review support, add redline.nvim as a dependency:
+>lua
+  -- lazy.nvim
+  { "martintrojer/sl-fugitive", dependencies = { "martintrojer/redline.nvim" } }
 <

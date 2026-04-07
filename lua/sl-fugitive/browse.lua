@@ -132,12 +132,14 @@ local function node_from_line(line)
   if not line then
     return nil
   end
-  return line:match("%f[%x]([0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]+)%f[^%x]")
+  return line:match(
+    "%f[%x]([0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]+)%f[^%x]"
+  )
 end
 
 local function current_node()
   local bufnr = vim.api.nvim_get_current_buf()
-  local ctx = require("sl-fugitive.ui").buf_var(bufnr, "jj_review_context", {})
+  local ctx = require("sl-fugitive.ui").buf_var(bufnr, "sl_buffer_context", {})
   if ctx.node and ctx.node ~= "" then
     return ctx.node
   end
@@ -164,7 +166,7 @@ end
 
 local function current_target()
   local bufnr = vim.api.nvim_get_current_buf()
-  local ctx = require("sl-fugitive.ui").buf_var(bufnr, "jj_review_context", {})
+  local ctx = require("sl-fugitive.ui").buf_var(bufnr, "sl_buffer_context", {})
   local file = relpath_for_current_buffer() or ctx.file
   local rev = current_node()
 

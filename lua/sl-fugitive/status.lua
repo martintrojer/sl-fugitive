@@ -120,18 +120,15 @@ local function toggle_inline_diff(bufnr)
 end
 
 local function comment_inline_diff(bufnr)
-  local ui = require("sl-fugitive.ui")
-  local cursor_line = vim.api.nvim_win_get_cursor(0)[1]
-  for _, item in ipairs(inline_diff_state(bufnr)) do
-    if cursor_line >= item.start_line and cursor_line <= item.end_line then
-      pcall(vim.api.nvim_buf_set_var, bufnr, "jj_review_context", {
-        kind = "status_inline",
-      })
-      require("sl-fugitive.review").comment_current_line(bufnr)
-      return
-    end
+  local init = require("sl-fugitive")
+  if not init.review_config then
+    require("sl-fugitive.ui").warn("Review not available (redline.nvim not installed)")
+    return
   end
-  ui.warn("Place the cursor on an inline diff line")
+  local ranges = inline_diff_state(bufnr)
+  require("redline").comment(init.review_config, bufnr, function(b)
+    return require("redline").extract_inline_diff_entry(b, ranges)
+  end)
 end
 
 local function format_lines(output)
@@ -186,9 +183,12 @@ local function setup_keymaps(bufnr)
     comment_inline_diff(bufnr)
   end)
 
-  ui.map(bufnr, "n", "gR", function()
-    require("sl-fugitive.review").show()
-  end)
+  local init = require("sl-fugitive")
+  if init.review_config then
+    ui.map(bufnr, "n", "gR", function()
+      require("redline").show(init.review_config)
+    end)
+  end
 
   ui.map(bufnr, "n", "d", function()
     local file = file_from_line(vim.api.nvim_get_current_line())
@@ -310,7 +310,9 @@ function M.show()
   setup_keymaps(bufnr)
 
   vim.api.nvim_buf_call(bufnr, function()
-    vim.cmd("silent! syntax clear SlStatusHeader SlStatusModified SlStatusAdded SlStatusRemoved SlStatusUnknown SlStatusCopySource")
+    vim.cmd(
+      "silent! syntax clear SlStatusHeader SlStatusModified SlStatusAdded SlStatusRemoved SlStatusUnknown SlStatusCopySource"
+    )
     vim.cmd("syntax match SlStatusHeader '^#.*'")
     vim.cmd("syntax match SlStatusModified '^M .*'")
     vim.cmd("syntax match SlStatusAdded '^[ARC] .*'")

@@ -13,8 +13,12 @@ local function workspace_status()
   local conflicts = init.run_vcs({ "resolve", "--list" })
   if conflicts and conflicts:match("^U ") then
     local count = 0
-    for _ in conflicts:gmatch("\nU ") do count = count + 1 end
-    if conflicts:match("^U ") then count = count + 1 end
+    for _ in conflicts:gmatch("\nU ") do
+      count = count + 1
+    end
+    if conflicts:match("^U ") then
+      count = count + 1
+    end
     return "# CONFLICTS: " .. count .. " unresolved — sl resolve"
   end
 
@@ -27,18 +31,30 @@ local function workspace_status()
   local m, a, r, u = 0, 0, 0, 0
   for line in status:gmatch("[^\n]+") do
     local code = line:match("^(%S)")
-    if code == "M" then m = m + 1
-    elseif code == "A" then a = a + 1
-    elseif code == "R" or code == "!" then r = r + 1
-    elseif code == "?" then u = u + 1
+    if code == "M" then
+      m = m + 1
+    elseif code == "A" then
+      a = a + 1
+    elseif code == "R" or code == "!" then
+      r = r + 1
+    elseif code == "?" then
+      u = u + 1
     end
   end
 
   local parts = {}
-  if m > 0 then table.insert(parts, m .. " modified") end
-  if a > 0 then table.insert(parts, a .. " added") end
-  if r > 0 then table.insert(parts, r .. " removed") end
-  if u > 0 then table.insert(parts, u .. " untracked") end
+  if m > 0 then
+    table.insert(parts, m .. " modified")
+  end
+  if a > 0 then
+    table.insert(parts, a .. " added")
+  end
+  if r > 0 then
+    table.insert(parts, r .. " removed")
+  end
+  if u > 0 then
+    table.insert(parts, u .. " untracked")
+  end
   return "# Working copy: " .. table.concat(parts, ", ")
 end
 
@@ -63,7 +79,9 @@ local function node_from_line(line)
   if not line then
     return nil
   end
-  return line:match("%f[%x]([0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]+)%f[^%x]")
+  return line:match(
+    "%f[%x]([0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]+)%f[^%x]"
+  )
 end
 
 local function selected_node()
@@ -123,17 +141,17 @@ function M.show_changeset(node, opts)
     bufnr = ansi.create_colored_buffer(output, bufname, header, { prefix = "SlShow" })
   end
 
-  pcall(vim.api.nvim_buf_set_var, bufnr, "jj_review_context", {
-    kind = "unified_diff",
+  local ctx = {
     source = "changeset detail",
     rev = meta.node or node,
     node = meta.node or node,
     summary = meta.summary,
     author = meta.author,
     date = meta.date,
-  })
+  }
+  pcall(vim.api.nvim_buf_set_var, bufnr, "sl_buffer_context", ctx)
   pcall(vim.api.nvim_buf_set_var, bufnr, "sl_changeset_node", meta.node or node)
-  M.setup_detail_keymaps(bufnr)
+  M.setup_detail_keymaps(bufnr, ctx)
   if opts and opts.split_cmd then
     ui.open_pane({ split_cmd = opts.split_cmd })
     vim.api.nvim_set_current_buf(bufnr)
@@ -269,18 +287,20 @@ local function run_hide(node)
   end
 end
 
-function M.setup_detail_keymaps(bufnr)
+function M.setup_detail_keymaps(bufnr, review_ctx)
   ui.map(bufnr, "n", "q", function()
     vim.cmd(ui.close_cmd())
   end)
 
-  ui.map(bufnr, "n", "cR", function()
-    require("sl-fugitive.review").comment_current_line(bufnr)
-  end)
-
-  ui.map(bufnr, "n", "gR", function()
-    require("sl-fugitive.review").show()
-  end)
+  local init = require("sl-fugitive")
+  if init.review_config then
+    ui.map(bufnr, "n", "cR", function()
+      require("redline").comment_unified_diff(init.review_config, bufnr, review_ctx)
+    end)
+    ui.map(bufnr, "n", "gR", function()
+      require("redline").show(init.review_config)
+    end)
+  end
 
   ui.map(bufnr, "n", "gl", function()
     vim.cmd(ui.close_cmd())
@@ -409,9 +429,12 @@ local function setup_keymaps(bufnr)
     end
   end)
 
-  ui.map(bufnr, "n", "gR", function()
-    require("sl-fugitive.review").show()
-  end)
+  local init = require("sl-fugitive")
+  if init.review_config then
+    ui.map(bufnr, "n", "gR", function()
+      require("redline").show(init.review_config)
+    end)
+  end
 
   ui.map(bufnr, "n", "gs", function()
     vim.cmd(ui.close_cmd())

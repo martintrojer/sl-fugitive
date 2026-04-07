@@ -25,6 +25,53 @@ local COMPLETE_COMMANDS = {
 
 function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", M.config, opts or {})
+
+  local has_redline, redline = pcall(require, "redline")
+  if has_redline then
+    local ui = require("sl-fugitive.ui")
+    M.review_config = redline.make_config({
+      repo_type = "Sapling",
+      repo_root = function()
+        return M.repo_root() or vim.fn.getcwd()
+      end,
+      open_mode = M.config.open_mode,
+      buf_name = "sl-review",
+      source = "sl-fugitive review",
+      on_show = function(bufnr)
+        if ui.buf_var(bufnr, "sl_review_keymaps_set", false) then
+          return
+        end
+        pcall(vim.api.nvim_buf_set_var, bufnr, "sl_review_keymaps_set", true)
+
+        ui.map(bufnr, "n", "gl", function()
+          vim.cmd(ui.close_cmd())
+          require("sl-fugitive").sl("log")
+        end)
+        ui.map(bufnr, "n", "gs", function()
+          vim.cmd(ui.close_cmd())
+          require("sl-fugitive.status").show()
+        end)
+        ui.map(bufnr, "n", "gb", function()
+          vim.cmd(ui.close_cmd())
+          require("sl-fugitive").sl("bookmark")
+        end)
+        ui.map(bufnr, "n", "g?", function()
+          ui.help_popup("sl-fugitive Review", {
+            "Review buffer",
+            "",
+            "Views:",
+            "  gb      Switch to bookmark view",
+            "  gl      Switch to log view",
+            "  gs      Switch to status view",
+            "",
+            "Other:",
+            "  q       Close",
+            "  g?      This help",
+          })
+        end)
+      end,
+    })
+  end
 end
 
 local function repo_markers()
@@ -141,7 +188,6 @@ function M.run_vcs_terminal(args, opts)
   local prev_tab = vim.api.nvim_get_current_tabpage()
   vim.cmd("tabnew")
   local term_tab = vim.api.nvim_get_current_tabpage()
-  local term_buf = vim.api.nvim_get_current_buf()
 
   local cmd = executable .. " " .. args_str
   if opts and opts.env then
@@ -180,7 +226,10 @@ function M.run_vcs_terminal(args, opts)
         end)
       else
         vim.schedule(function()
-          vim.notify("Terminal exited with code " .. exit_code .. " — :q to close", vim.log.levels.WARN)
+          vim.notify(
+            "Terminal exited with code " .. exit_code .. " — :q to close",
+            vim.log.levels.WARN
+          )
         end)
       end
     end,
@@ -247,7 +296,11 @@ function M.sl(args)
   end
 
   if command == "review" then
-    require("sl-fugitive.review").show()
+    if M.review_config then
+      require("redline").show(M.review_config)
+    else
+      require("sl-fugitive.ui").warn("Review not available (redline.nvim not installed)")
+    end
     return
   end
 

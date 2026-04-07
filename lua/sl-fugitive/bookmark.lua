@@ -18,7 +18,9 @@ local function node_from_line(line)
   if not line then
     return nil
   end
-  return line:match("([0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]+)%s*$")
+  return line:match(
+    "([0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]+)%s*$"
+  )
 end
 
 local function run_and_refresh(args, msg)
@@ -99,7 +101,10 @@ local function setup_keymaps(bufnr)
     end
     vim.ui.input({ prompt = "Rename '" .. name .. "' to: " }, function(new_name)
       if new_name and new_name ~= "" then
-        run_and_refresh({ "bookmark", "-m", name, new_name }, "Renamed " .. name .. " -> " .. new_name)
+        run_and_refresh(
+          { "bookmark", "-m", name, new_name },
+          "Renamed " .. name .. " -> " .. new_name
+        )
       end
     end)
   end)
@@ -118,11 +123,17 @@ local function setup_keymaps(bufnr)
     if not name then
       return
     end
-    vim.ui.input({ prompt = "Push bookmark '" .. name .. "' to remote name: " }, function(remote_name)
-      if remote_name and remote_name ~= "" then
-        run_and_refresh({ "push", "--to", remote_name, "--create" }, "Pushed bookmark to " .. remote_name)
+    vim.ui.input(
+      { prompt = "Push bookmark '" .. name .. "' to remote name: " },
+      function(remote_name)
+        if remote_name and remote_name ~= "" then
+          run_and_refresh(
+            { "push", "--to", remote_name, "--create" },
+            "Pushed bookmark to " .. remote_name
+          )
+        end
       end
-    end)
+    )
   end)
 
   ui.map(bufnr, "n", "R", function()
@@ -139,9 +150,12 @@ local function setup_keymaps(bufnr)
     require("sl-fugitive.status").show()
   end)
 
-  ui.map(bufnr, "n", "gR", function()
-    require("sl-fugitive.review").show()
-  end)
+  local init = require("sl-fugitive")
+  if init.review_config then
+    ui.map(bufnr, "n", "gR", function()
+      require("redline").show(init.review_config)
+    end)
+  end
 
   ui.map(bufnr, "n", "q", function()
     vim.cmd(ui.close_cmd())
