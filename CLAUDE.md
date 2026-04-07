@@ -60,6 +60,13 @@ Do not automatically retry failed mutations. Rebase, hide, amend, and restack
 operate on changing history state and should fail loudly instead of being
 replayed implicitly.
 
+## Current Rules
+
+- Lean into Sapling, not generic Mercurial compatibility.
+- Keep the AI review buffer as a first-class workflow.
+- Favor node-id based history selection over Mercurial-style numeric rev assumptions.
+- Design the log and mutation UX around Sapling's stack powers.
+
 ## Dependencies
 
 - Neovim 0.10+
