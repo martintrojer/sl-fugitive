@@ -132,29 +132,36 @@ function M.browse(remote_name)
     return
   end
 
-  local remote, err = core_browse.parse_remote_url(remote_url)
-  if not remote then
-    ui.err(err)
-    return
-  end
-
   local target = current_target()
   if not target then
     ui.err("No browse target in the current buffer")
     return
   end
 
+  -- Try custom forges first
   local url
   if target.kind == "file" then
-    url = core_browse.build_file_url(
-      remote,
-      target.path,
-      target.rev,
-      target.line_start,
-      target.line_end
-    )
-  else
-    url = core_browse.build_commit_url(remote, target.rev)
+    url = core_browse.build_custom_file_url(remote_url, target.path, target.line_start, target.line_end)
+  end
+
+  if not url then
+    local remote, err = core_browse.parse_remote_url(remote_url)
+    if not remote then
+      ui.err(err)
+      return
+    end
+
+    if target.kind == "file" then
+      url = core_browse.build_file_url(
+        remote,
+        target.path,
+        target.rev,
+        target.line_start,
+        target.line_end
+      )
+    else
+      url = core_browse.build_commit_url(remote, target.rev)
+    end
   end
 
   if not url then
