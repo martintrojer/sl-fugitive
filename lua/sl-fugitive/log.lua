@@ -126,24 +126,32 @@ local function selected_node()
   return node
 end
 
+local META_SEP = "\t\t"
+
 local function get_changeset_metadata(node)
   local output = require("sl-fugitive").run_vcs({
     "log",
     "-r",
     node,
     "-T",
-    "{node|short}\\n{desc|firstline}\\n{author|person}\\n{date|isodate}\\n",
+    "{node|short}"
+      .. META_SEP
+      .. "{desc|firstline}"
+      .. META_SEP
+      .. "{author|person}"
+      .. META_SEP
+      .. "{date|isodate}\\n",
   })
   if not output then
     return { node = node }
   end
 
-  local lines = vim.split(output:gsub("%s+$", ""), "\n", { plain = true })
+  local parts = vim.split(output:gsub("%s+$", ""), META_SEP, { plain = true })
   return {
-    node = lines[1] ~= "" and lines[1] or node,
-    summary = lines[2] or "",
-    author = lines[3] or "",
-    date = lines[4] or "",
+    node = parts[1] ~= "" and parts[1] or node,
+    summary = parts[2] or "",
+    author = parts[3] or "",
+    date = parts[4] or "",
   }
 end
 
