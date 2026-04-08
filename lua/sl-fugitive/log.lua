@@ -338,6 +338,36 @@ function M.setup_detail_keymaps(bufnr, review_ctx)
     end)
   end
 
+  local rev = review_ctx.node or review_ctx.rev
+  ui.map(bufnr, "n", "D", function()
+    local diff_output = init.run_vcs({ "diff", "--git", "-c", rev })
+    if not diff_output then
+      return
+    end
+    local files = {}
+    for _, line in ipairs(vim.split(diff_output, "\n")) do
+      local f = line:match("^diff %-%-git a/.+ b/(.+)$")
+      if f then
+        table.insert(files, f)
+      end
+    end
+    if #files == 0 then
+      ui.warn("No files changed")
+    elseif #files == 1 then
+      local parent = ui.file_at_rev(files[1], rev)
+      local current = ui.file_at_rev(files[1], rev .. "^")
+      ui.open_sidebyside(current, files[1] .. " (" .. rev .. "^)", parent, files[1] .. " (" .. rev .. ")", files[1])
+    else
+      ui.select(files, "Side-by-side diff for", function(choice)
+        if choice then
+          local parent = ui.file_at_rev(choice, rev .. "^")
+          local current = ui.file_at_rev(choice, rev)
+          ui.open_sidebyside(parent, choice .. " (" .. rev .. "^)", current, choice .. " (" .. rev .. ")", choice)
+        end
+      end)
+    end
+  end)
+
   ui.setup_view_keymaps(bufnr, {
     log = function()
       vim.cmd(ui.close_cmd())
@@ -361,6 +391,7 @@ function M.setup_detail_keymaps(bufnr, review_ctx)
         "Actions:",
         "  cR      Add review comment",
         "  gR      Open review buffer",
+        "  D       Side-by-side diff (pick file)",
         "",
         "Views:",
         "  gb      Switch to bookmark view",
