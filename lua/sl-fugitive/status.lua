@@ -1,7 +1,10 @@
 local M = {}
 
+local core_list = require("fugitive-core.views.list")
+
 local BUF_PATTERN = "sl%-status"
 local BUF_NAME = "sl-status"
+local INLINE_VAR = "sl_status_inline_diffs"
 
 local function get_status()
   return require("sl-fugitive").run_vcs({ "status", "-C" })
@@ -23,23 +26,6 @@ local function status_code_from_line(line)
   return line and line:match("^%s*([MARC!%?I])%s+")
 end
 
-local function inline_diff_state(bufnr)
-  return require("sl-fugitive.ui").buf_var(bufnr, "sl_status_inline_diffs", {})
-end
-
-local function set_inline_diff_state(bufnr, state)
-  pcall(vim.api.nvim_buf_set_var, bufnr, "sl_status_inline_diffs", state)
-end
-
-local function shift_inline_ranges(state, from_line, delta)
-  for _, item in ipairs(state) do
-    if item.start_line > from_line then
-      item.start_line = item.start_line + delta
-      item.end_line = item.end_line + delta
-    end
-  end
-end
-
 local function supports_diff(code)
   return code == "M" or code == "A" or code == "R"
 end
@@ -55,7 +41,7 @@ local function toggle_inline_diff(bufnr)
     return
   end
 
-  local state = inline_diff_state(bufnr)
+  local state = core_list.get_inline_state(bufnr, INLINE_VAR)
   for i, item in ipairs(state) do
     if item.start_line == line_nr + 1 then
       vim.bo[bufnr].modifiable = true
@@ -65,8 +51,8 @@ local function toggle_inline_diff(bufnr)
 
       local removed = item.end_line - item.start_line + 1
       table.remove(state, i)
-      shift_inline_ranges(state, item.start_line - 1, -removed)
-      set_inline_diff_state(bufnr, state)
+      core_list.shift_inline_ranges(state, item.start_line - 1, -removed)
+      core_list.set_inline_state(bufnr, INLINE_VAR, state)
       return
     end
   end
@@ -98,16 +84,15 @@ local function toggle_inline_diff(bufnr)
   vim.bo[bufnr].modifiable = false
   vim.bo[bufnr].modified = false
 
-  shift_inline_ranges(state, line_nr, #diff_lines)
+  core_list.shift_inline_ranges(state, line_nr, #diff_lines)
   table.insert(state, {
     start_line = line_nr + 1,
     end_line = line_nr + #diff_lines,
     file = file,
     rev = ".",
   })
-  set_inline_diff_state(bufnr, state)
+  core_list.set_inline_state(bufnr, INLINE_VAR, state)
 
-  -- Apply parsed ANSI highlights
   ansi.setup_diff_highlighting(bufnr, nil, { prefix = "SlStatus" })
   for i, highlights in ipairs(line_highlights) do
     local buf_line = line_nr + i - 1
@@ -139,7 +124,7 @@ local function comment_inline_diff(bufnr)
     require("sl-fugitive.ui").warn("Review not available (redline.nvim not installed)")
     return
   end
-  local ranges = inline_diff_state(bufnr)
+  local ranges = core_list.get_inline_state(bufnr, INLINE_VAR)
   require("redline").comment(init.review_config, bufnr, function(b)
     return require("redline").extract_inline_diff_entry(b, ranges)
   end)
@@ -275,7 +260,6 @@ local function setup_keymaps(bufnr)
       "",
       "Other:",
       "  indented lines show copy sources",
-
       "  R        Refresh",
       "  q        Close",
       "  g?       This help",
@@ -284,67 +268,46 @@ local function setup_keymaps(bufnr)
 end
 
 function M.refresh()
-  local ui = require("sl-fugitive.ui")
-  local bufnr = ui.find_buf(BUF_PATTERN)
-  if not bufnr then
-    return
-  end
-
-  local output = get_status()
-  if not output then
-    return
-  end
-
-  ui.set_buf_lines(bufnr, format_lines(output))
-  set_inline_diff_state(bufnr, {})
+  core_list.refresh({
+    get_data = get_status,
+    format_lines = format_lines,
+    buf_pattern = BUF_PATTERN,
+    on_refresh = function(bufnr)
+      core_list.set_inline_state(bufnr, INLINE_VAR, {})
+    end,
+  })
 end
 
 function M.show()
-  local output = get_status()
-  if not output then
-    return
-  end
-
-  local lines = format_lines(output)
-  local ui = require("sl-fugitive.ui")
-  local bufnr = ui.find_buf(BUF_PATTERN)
-
-  if bufnr then
-    ui.set_buf_lines(bufnr, lines)
-  else
-    bufnr = ui.create_scratch_buffer({ name = BUF_NAME })
-    ui.set_buf_lines(bufnr, lines)
-  end
-
-  set_inline_diff_state(bufnr, {})
-  setup_keymaps(bufnr)
-
-  vim.api.nvim_buf_call(bufnr, function()
-    vim.cmd(
-      "silent! syntax clear SlStatusHeader SlStatusModified SlStatusAdded SlStatusRemoved SlStatusUnknown SlStatusCopySource"
-    )
-    vim.cmd("syntax match SlStatusHeader '^#.*'")
-    vim.cmd("syntax match SlStatusModified '^M .*'")
-    vim.cmd("syntax match SlStatusAdded '^[ARC] .*'")
-    vim.cmd("syntax match SlStatusRemoved '^! .*'")
-    vim.cmd("syntax match SlStatusUnknown '^? .*'")
-    vim.cmd("syntax match SlStatusCopySource '^  .*'")
-    vim.cmd("highlight default link SlStatusHeader Comment")
-    vim.cmd("highlight default link SlStatusModified DiffChange")
-    vim.cmd("highlight default link SlStatusAdded DiffAdd")
-    vim.cmd("highlight default link SlStatusRemoved DiffDelete")
-    vim.cmd("highlight default link SlStatusUnknown Directory")
-    vim.cmd("highlight default link SlStatusCopySource Comment")
-  end)
-
-  ui.ensure_visible(bufnr)
-  for i, line in ipairs(lines) do
-    if file_from_line(line) then
-      pcall(vim.api.nvim_win_set_cursor, 0, { i, 0 })
-      break
-    end
-  end
-  ui.set_statusline(bufnr, "sl-status")
+  core_list.show({
+    get_data = get_status,
+    format_lines = format_lines,
+    buf_pattern = BUF_PATTERN,
+    buf_name = BUF_NAME,
+    statusline = "sl-status",
+    first_item = file_from_line,
+    setup = function(bufnr)
+      core_list.set_inline_state(bufnr, INLINE_VAR, {})
+      setup_keymaps(bufnr)
+      vim.api.nvim_buf_call(bufnr, function()
+        vim.cmd(
+          "silent! syntax clear SlStatusHeader SlStatusModified SlStatusAdded SlStatusRemoved SlStatusUnknown SlStatusCopySource"
+        )
+        vim.cmd("syntax match SlStatusHeader '^#.*'")
+        vim.cmd("syntax match SlStatusModified '^M .*'")
+        vim.cmd("syntax match SlStatusAdded '^[ARC] .*'")
+        vim.cmd("syntax match SlStatusRemoved '^! .*'")
+        vim.cmd("syntax match SlStatusUnknown '^? .*'")
+        vim.cmd("syntax match SlStatusCopySource '^  .*'")
+        vim.cmd("highlight default link SlStatusHeader Comment")
+        vim.cmd("highlight default link SlStatusModified DiffChange")
+        vim.cmd("highlight default link SlStatusAdded DiffAdd")
+        vim.cmd("highlight default link SlStatusRemoved DiffDelete")
+        vim.cmd("highlight default link SlStatusUnknown Directory")
+        vim.cmd("highlight default link SlStatusCopySource Comment")
+      end)
+    end,
+  })
 end
 
 return M

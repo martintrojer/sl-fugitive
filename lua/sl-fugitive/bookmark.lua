@@ -1,5 +1,7 @@
 local M = {}
 
+local core_list = require("fugitive-core.views.list")
+
 local BUF_PATTERN = "sl%-bookmarks"
 local BUF_NAME = "sl-bookmarks"
 
@@ -180,54 +182,33 @@ local function setup_keymaps(bufnr)
 end
 
 function M.refresh()
-  local ui = require("sl-fugitive.ui")
-  local bufnr = ui.find_buf(BUF_PATTERN)
-  if not bufnr then
-    return
-  end
-  local output = get_bookmarks()
-  if not output then
-    return
-  end
-  ui.set_buf_lines(bufnr, format_lines(output))
+  core_list.refresh({
+    get_data = get_bookmarks,
+    format_lines = format_lines,
+    buf_pattern = BUF_PATTERN,
+  })
 end
 
 function M.show()
-  local output = get_bookmarks()
-  if not output then
-    return
-  end
-
-  local lines = format_lines(output)
-  local ui = require("sl-fugitive.ui")
-  local bufnr = ui.find_buf(BUF_PATTERN)
-  if bufnr then
-    ui.set_buf_lines(bufnr, lines)
-  else
-    bufnr = ui.create_scratch_buffer({ name = BUF_NAME })
-    ui.set_buf_lines(bufnr, lines)
-  end
-
-  vim.api.nvim_buf_call(bufnr, function()
-    vim.cmd("syntax match SlBookmarkHeader '^#.*'")
-    vim.cmd("syntax match SlBookmarkActive '^ \\* .*'")
-    vim.cmd("syntax match SlBookmarkName '^\\s*\\*\\?\\s*[[:alnum:]_.\\/-]\\+\\s\\+'")
-    vim.cmd("highlight default link SlBookmarkHeader Comment")
-    vim.cmd("highlight default link SlBookmarkActive Identifier")
-    vim.cmd("highlight default link SlBookmarkName Identifier")
-  end)
-
-  setup_keymaps(bufnr)
-  ui.ensure_visible(bufnr)
-
-  for i, line in ipairs(lines) do
-    if bookmark_from_line(line) then
-      pcall(vim.api.nvim_win_set_cursor, 0, { i, 0 })
-      break
-    end
-  end
-
-  ui.set_statusline(bufnr, "sl-bookmarks")
+  core_list.show({
+    get_data = get_bookmarks,
+    format_lines = format_lines,
+    buf_pattern = BUF_PATTERN,
+    buf_name = BUF_NAME,
+    statusline = "sl-bookmarks",
+    first_item = bookmark_from_line,
+    setup = function(bufnr)
+      vim.api.nvim_buf_call(bufnr, function()
+        vim.cmd("syntax match SlBookmarkHeader '^#.*'")
+        vim.cmd("syntax match SlBookmarkActive '^ \\* .*'")
+        vim.cmd("syntax match SlBookmarkName '^\\s*\\*\\?\\s*[[:alnum:]_.\\/-]\\+\\s\\+'")
+        vim.cmd("highlight default link SlBookmarkHeader Comment")
+        vim.cmd("highlight default link SlBookmarkActive Identifier")
+        vim.cmd("highlight default link SlBookmarkName Identifier")
+      end)
+      setup_keymaps(bufnr)
+    end,
+  })
 end
 
 return M
