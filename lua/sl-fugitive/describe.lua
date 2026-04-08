@@ -10,36 +10,36 @@ end
 local function setup_keymaps(bufnr, discard_and_close)
   local ui = require("sl-fugitive.ui")
 
-  ui.map(bufnr, "n", "gl", function()
-    discard_and_close()
-    require("sl-fugitive").sl("log")
-  end)
-
-  ui.map(bufnr, "n", "gs", function()
-    discard_and_close()
-    require("sl-fugitive").sl("status")
-  end)
-
-  ui.map(bufnr, "n", "gb", function()
-    discard_and_close()
-    require("sl-fugitive").sl("bookmark")
-  end)
-
-  ui.map(bufnr, "n", "g?", function()
-    ui.help_popup("sl-fugitive Editor", {
-      "Sapling editor buffer",
-      "",
-      "Views:",
-      "  gb      Switch to bookmark view",
-      "  gl      Switch to smartlog",
-      "  gs      Switch to status view",
-      "",
-      "Other:",
-      "  :w      Save and run Sapling command",
-      "  q       Close without saving",
-      "  g?      This help",
-    })
-  end)
+  ui.setup_view_keymaps(bufnr, {
+    close = discard_and_close,
+    log = function()
+      discard_and_close()
+      require("sl-fugitive").sl("log")
+    end,
+    status = function()
+      discard_and_close()
+      require("sl-fugitive").sl("status")
+    end,
+    bookmark = function()
+      discard_and_close()
+      require("sl-fugitive").sl("bookmark")
+    end,
+    help = function()
+      ui.help_popup("sl-fugitive Editor", {
+        "Sapling editor buffer",
+        "",
+        "Views:",
+        "  gb      Switch to bookmark view",
+        "  gl      Switch to smartlog",
+        "  gs      Switch to status view",
+        "",
+        "Other:",
+        "  :w      Save and run Sapling command",
+        "  q       Close without saving",
+        "  g?      This help",
+      })
+    end,
+  })
 end
 
 function M.describe(rev)

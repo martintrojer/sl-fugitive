@@ -327,53 +327,49 @@ end
 
 function M.setup_detail_keymaps(bufnr, review_ctx)
   local ui = require("sl-fugitive.ui")
-  ui.map(bufnr, "n", "q", function()
-    vim.cmd(ui.close_cmd())
-  end)
-
   local init = require("sl-fugitive")
+
   if init.review_config then
     ui.map(bufnr, "n", "cR", function()
       require("redline").comment_unified_diff(init.review_config, bufnr, review_ctx)
     end)
-    ui.map(bufnr, "n", "gR", function()
-      require("redline").show(init.review_config)
-    end)
   end
 
-  ui.map(bufnr, "n", "gl", function()
-    vim.cmd(ui.close_cmd())
-    M.show()
-  end)
-
-  ui.map(bufnr, "n", "gs", function()
-    vim.cmd(ui.close_cmd())
-    require("sl-fugitive.status").show()
-  end)
-
-  ui.map(bufnr, "n", "gb", function()
-    vim.cmd(ui.close_cmd())
-    require("sl-fugitive").sl("bookmark")
-  end)
-
-  ui.map(bufnr, "n", "g?", function()
-    ui.help_popup("sl-fugitive Changeset", {
-      "Changeset detail view",
-      "",
-      "Actions:",
-      "  cR      Add review comment",
-      "  gR      Open review buffer",
-      "",
-      "Views:",
-      "  gb      Switch to bookmark view",
-      "  gl      Switch to smartlog",
-      "  gs      Switch to status view",
-      "",
-      "Other:",
-      "  q       Close",
-      "  g?      This help",
-    })
-  end)
+  ui.setup_view_keymaps(bufnr, {
+    log = function()
+      vim.cmd(ui.close_cmd())
+      M.show()
+    end,
+    status = function()
+      vim.cmd(ui.close_cmd())
+      require("sl-fugitive.status").show()
+    end,
+    bookmark = function()
+      vim.cmd(ui.close_cmd())
+      require("sl-fugitive").sl("bookmark")
+    end,
+    review = init.review_config and function()
+      require("redline").show(init.review_config)
+    end,
+    help = function()
+      ui.help_popup("sl-fugitive Changeset", {
+        "Changeset detail view",
+        "",
+        "Actions:",
+        "  cR      Add review comment",
+        "  gR      Open review buffer",
+        "",
+        "Views:",
+        "  gb      Switch to bookmark view",
+        "  gl      Switch to smartlog",
+        "  gs      Switch to status view",
+        "",
+        "Other:",
+        "  q       Close",
+        "  g?      This help",
+      })
+    end,
+  })
 end
 
 local function setup_keymaps(bufnr)
@@ -477,62 +473,54 @@ local function setup_keymaps(bufnr)
   end)
 
   local init = require("sl-fugitive")
-  if init.review_config then
-    ui.map(bufnr, "n", "gR", function()
+  ui.setup_view_keymaps(bufnr, {
+    status = function()
+      vim.cmd(ui.close_cmd())
+      require("sl-fugitive.status").show()
+    end,
+    bookmark = function()
+      vim.cmd(ui.close_cmd())
+      require("sl-fugitive").sl("bookmark")
+    end,
+    review = init.review_config and function()
       require("redline").show(init.review_config)
-    end)
-  end
-
-  ui.map(bufnr, "n", "gs", function()
-    vim.cmd(ui.close_cmd())
-    require("sl-fugitive.status").show()
-  end)
-
-  ui.map(bufnr, "n", "gb", function()
-    vim.cmd(ui.close_cmd())
-    require("sl-fugitive").sl("bookmark")
-  end)
-
-  ui.map(bufnr, "n", "R", function()
-    M.refresh()
-  end)
-
-  ui.map(bufnr, "n", "q", function()
-    vim.cmd(ui.close_cmd())
-  end)
-
-  ui.map(bufnr, "n", "g?", function()
-    ui.help_popup("sl-fugitive Smartlog", {
-      "Smartlog view",
-      "",
-      "Actions:",
-      "  <CR>     Show changeset detail",
-      "  d        Show diff for changeset",
-      "  go       Goto selected commit",
-      "  ra       Absorb current working changes into the stack",
-      "  rm       Edit selected commit metadata/message",
-      "  rr       Rebase selected commit onto a destination",
-      "  rs       Rebase selected commit and descendants onto a destination",
-      "  ri       Interactive rebase from selected commit (:q to cancel)",
-      "  rS       Split selected commit (:q to cancel)",
-      "  rt       Amend working changes into selected commit",
-      "  rf       Fold linearly from current commit to selected commit",
-      "  rh       Hide selected commit and descendants",
-      "  rR       Restack current stack",
-      "  rc       Continue interrupted rebase",
-      "  rA       Abort interrupted rebase",
-      "  gR       Open review buffer",
-      "",
-      "Views:",
-      "  gb       Switch to bookmark view",
-      "  gs       Switch to status view",
-      "",
-      "Other:",
-      "  R        Refresh",
-      "  q        Close",
-      "  g?       This help",
-    })
-  end)
+    end,
+    refresh = function()
+      M.refresh()
+    end,
+    help = function()
+      ui.help_popup("sl-fugitive Smartlog", {
+        "Smartlog view",
+        "",
+        "Actions:",
+        "  <CR>     Show changeset detail",
+        "  d        Show diff for changeset",
+        "  go       Goto selected commit",
+        "  ra       Absorb current working changes into the stack",
+        "  rm       Edit selected commit metadata/message",
+        "  rr       Rebase selected commit onto a destination",
+        "  rs       Rebase selected commit and descendants onto a destination",
+        "  ri       Interactive rebase from selected commit (:q to cancel)",
+        "  rS       Split selected commit (:q to cancel)",
+        "  rt       Amend working changes into selected commit",
+        "  rf       Fold linearly from current commit to selected commit",
+        "  rh       Hide selected commit and descendants",
+        "  rR       Restack current stack",
+        "  rc       Continue interrupted rebase",
+        "  rA       Abort interrupted rebase",
+        "  gR       Open review buffer",
+        "",
+        "Views:",
+        "  gb       Switch to bookmark view",
+        "  gs       Switch to status view",
+        "",
+        "Other:",
+        "  R        Refresh",
+        "  q        Close",
+        "  g?       This help",
+      })
+    end,
+  })
 end
 
 function M.refresh()

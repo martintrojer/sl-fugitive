@@ -104,47 +104,42 @@ function M.show(filename, rev)
     end
   end)
 
-  if init.review_config then
-    ui.map(ann_buf, "n", "gR", function()
+  ui.setup_view_keymaps(ann_buf, {
+    close = close,
+    log = function()
+      close()
+      require("sl-fugitive").sl("log")
+    end,
+    status = function()
+      close()
+      require("sl-fugitive").sl("status")
+    end,
+    bookmark = function()
+      close()
+      require("sl-fugitive").sl("bookmark")
+    end,
+    review = init.review_config and function()
       require("redline").show(init.review_config)
-    end)
-  end
-
-  ui.map(ann_buf, "n", "gl", function()
-    close()
-    require("sl-fugitive").sl("log")
-  end)
-
-  ui.map(ann_buf, "n", "gs", function()
-    close()
-    require("sl-fugitive").sl("status")
-  end)
-
-  ui.map(ann_buf, "n", "gb", function()
-    close()
-    require("sl-fugitive").sl("bookmark")
-  end)
-
-  ui.map(ann_buf, "n", "q", close)
-
-  ui.map(ann_buf, "n", "g?", function()
-    ui.help_popup("sl-fugitive Annotate", {
-      "Annotate view",
-      "",
-      "Actions:",
-      "  <CR>    Show changeset for this line",
-      "  gR      Open review buffer",
-      "",
-      "Views:",
-      "  gb      Switch to bookmark view",
-      "  gl      Switch to smartlog",
-      "  gs      Switch to status view",
-      "",
-      "Other:",
-      "  q       Close annotation",
-      "  g?      This help",
-    })
-  end)
+    end,
+    help = function()
+      ui.help_popup("sl-fugitive Annotate", {
+        "Annotate view",
+        "",
+        "Actions:",
+        "  <CR>    Show changeset for this line",
+        "  gR      Open review buffer",
+        "",
+        "Views:",
+        "  gb      Switch to bookmark view",
+        "  gl      Switch to smartlog",
+        "  gs      Switch to status view",
+        "",
+        "Other:",
+        "  q       Close annotation",
+        "  g?      This help",
+      })
+    end,
+  })
 
   return true
 end

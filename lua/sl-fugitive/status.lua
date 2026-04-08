@@ -182,13 +182,6 @@ local function setup_keymaps(bufnr)
     comment_inline_diff(bufnr)
   end)
 
-  local init = require("sl-fugitive")
-  if init.review_config then
-    ui.map(bufnr, "n", "gR", function()
-      require("redline").show(init.review_config)
-    end)
-  end
-
   ui.map(bufnr, "n", "d", function()
     local file = file_from_line(vim.api.nvim_get_current_line())
     if file then
@@ -222,49 +215,48 @@ local function setup_keymaps(bufnr)
     end
   end)
 
-  ui.map(bufnr, "n", "R", function()
-    M.refresh()
-  end)
-
-  ui.map(bufnr, "n", "gb", function()
-    vim.cmd(ui.close_cmd())
-    require("sl-fugitive").sl("bookmark")
-  end)
-
-  ui.map(bufnr, "n", "gl", function()
-    vim.cmd(ui.close_cmd())
-    require("sl-fugitive").sl("log")
-  end)
-
-  ui.map(bufnr, "n", "q", function()
-    vim.cmd(ui.close_cmd())
-  end)
-
-  ui.map(bufnr, "n", "g?", function()
-    ui.help_popup("sl-fugitive Status", {
-      "Status view",
-      "",
-      "Actions:",
-      "  <CR>     Open file",
-      "  o        Open file in split",
-      "  =        Toggle inline diff",
-      "  cR       Add review comment from inline diff",
-      "  gR       Open review buffer",
-      "  d        Show diff for file",
-      "  D        Side-by-side diff",
-      "  x        Revert file to parent revision",
-      "",
-      "Views:",
-      "  gb       Switch to bookmark view",
-      "  gl       Switch to smartlog",
-      "",
-      "Other:",
-      "  indented lines show copy sources",
-      "  R        Refresh",
-      "  q        Close",
-      "  g?       This help",
-    })
-  end)
+  local init = require("sl-fugitive")
+  ui.setup_view_keymaps(bufnr, {
+    log = function()
+      vim.cmd(ui.close_cmd())
+      init.sl("log")
+    end,
+    bookmark = function()
+      vim.cmd(ui.close_cmd())
+      init.sl("bookmark")
+    end,
+    review = init.review_config and function()
+      require("redline").show(init.review_config)
+    end,
+    refresh = function()
+      M.refresh()
+    end,
+    help = function()
+      ui.help_popup("sl-fugitive Status", {
+        "Status view",
+        "",
+        "Actions:",
+        "  <CR>     Open file",
+        "  o        Open file in split",
+        "  =        Toggle inline diff",
+        "  cR       Add review comment from inline diff",
+        "  gR       Open review buffer",
+        "  d        Show diff for file",
+        "  D        Side-by-side diff",
+        "  x        Revert file to parent revision",
+        "",
+        "Views:",
+        "  gb       Switch to bookmark view",
+        "  gl       Switch to smartlog",
+        "",
+        "Other:",
+        "  indented lines show copy sources",
+        "  R        Refresh",
+        "  q        Close",
+        "  g?       This help",
+      })
+    end,
+  })
 end
 
 function M.refresh()

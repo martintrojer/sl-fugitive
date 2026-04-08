@@ -99,10 +99,6 @@ local function find_repo_root()
   return nil
 end
 
-local function command_name()
-  return M.config.command
-end
-
 local function run_with_feedback(cmd, opts, label)
   vim.api.nvim_echo({ { label .. ": running...", "Comment" } }, false, {})
   vim.cmd("redraw")
@@ -123,10 +119,10 @@ function M.run_vcs(args, opts)
     return nil
   end
 
-  local executable = command_name()
+  local executable = M.config.command
   local sys_opts = { cwd = repo_root }
   if opts and opts.env then
-    sys_opts.env = opts.env
+    sys_opts.env = vim.tbl_extend("force", vim.fn.environ(), opts.env)
   end
 
   local cmd
@@ -163,7 +159,7 @@ function M.run_vcs_terminal(args, opts)
     return
   end
 
-  local executable = command_name()
+  local executable = M.config.command
   local args_str = type(args) == "table" and table.concat(args, " ") or args
   if not args_str or args_str == "" then
     return

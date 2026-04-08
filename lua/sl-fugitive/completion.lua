@@ -18,7 +18,16 @@ local function get_aliases()
   return cached_aliases
 end
 
+local cached_revisions = nil
+local revisions_time = 0
+local REVISIONS_TTL = 5
+
 local function get_revisions()
+  local now = vim.uv.now() / 1000
+  if cached_revisions and (now - revisions_time) < REVISIONS_TTL then
+    return cached_revisions
+  end
+
   local revisions = { "@", "@-", "@+", "root()" }
   local init = require("sl-fugitive")
 
@@ -40,6 +49,8 @@ local function get_revisions()
     end
   end
 
+  cached_revisions = revisions
+  revisions_time = now
   return revisions
 end
 

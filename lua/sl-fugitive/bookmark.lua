@@ -131,54 +131,46 @@ local function setup_keymaps(bufnr)
     )
   end)
 
-  ui.map(bufnr, "n", "R", function()
-    M.refresh()
-  end)
-
-  ui.map(bufnr, "n", "gl", function()
-    vim.cmd(ui.close_cmd())
-    require("sl-fugitive.log").show()
-  end)
-
-  ui.map(bufnr, "n", "gs", function()
-    vim.cmd(ui.close_cmd())
-    require("sl-fugitive.status").show()
-  end)
-
   local init = require("sl-fugitive")
-  if init.review_config then
-    ui.map(bufnr, "n", "gR", function()
+  ui.setup_view_keymaps(bufnr, {
+    log = function()
+      vim.cmd(ui.close_cmd())
+      require("sl-fugitive.log").show()
+    end,
+    status = function()
+      vim.cmd(ui.close_cmd())
+      require("sl-fugitive.status").show()
+    end,
+    review = init.review_config and function()
       require("redline").show(init.review_config)
-    end)
-  end
-
-  ui.map(bufnr, "n", "q", function()
-    vim.cmd(ui.close_cmd())
-  end)
-
-  ui.map(bufnr, "n", "g?", function()
-    ui.help_popup("sl-fugitive Bookmarks", {
-      "Bookmarks view",
-      "",
-      "Actions:",
-      "  c       Create bookmark",
-      "  d       Delete bookmark",
-      "  m       Move bookmark to revision",
-      "  r       Rename bookmark",
-      "  go      Goto bookmark commit",
-      "  p       Push to remote bookmark",
-      "",
-      "Views:",
-      "  gl      Switch to smartlog",
-      "  gs      Switch to status view",
-      "  gR      Open review buffer",
-      "",
-      "Other:",
-      "  R       Refresh",
-      "  q       Close",
-      "  g?      This help",
-    })
-  end)
+    end,
+    refresh = function()
+      M.refresh()
+    end,
+    help = function()
+      ui.help_popup("sl-fugitive Bookmarks", {
+        "Bookmarks view",
+        "",
+        "Actions:",
+        "  c       Create bookmark",
+        "  d       Delete bookmark",
+        "  m       Move bookmark to revision",
+        "  r       Rename bookmark",
+        "  go      Goto bookmark commit",
+        "  p       Push to remote bookmark",
+        "",
+        "Views:",
+        "  gl      Switch to smartlog",
+        "  gs      Switch to status view",
+        "  gR      Open review buffer",
+        "",
+        "Other:",
+        "  R       Refresh",
+        "  q       Close",
+        "  g?      This help",
+      })
+    end,
+  })
 end
 
 function M.refresh()
