@@ -61,6 +61,7 @@ require("sl-fugitive").setup({
 
 - Neovim 0.10+
 - [Sapling](https://sapling-scm.com/) installed and available in PATH
+- [fugitive-core.nvim](https://github.com/martintrojer/fugitive-core.nvim)
 
 ### Optional
 
@@ -73,9 +74,16 @@ require("sl-fugitive").setup({
 ### [lazy.nvim](https://github.com/folke/lazy.nvim)
 
 ```lua
-{ "martintrojer/sl-fugitive" }
+{ "martintrojer/sl-fugitive", dependencies = { "martintrojer/fugitive-core.nvim" } }
 -- For AI review support:
--- { "martintrojer/sl-fugitive", dependencies = { "martintrojer/redline.nvim" } }
+-- { "martintrojer/sl-fugitive", dependencies = { "martintrojer/fugitive-core.nvim", "martintrojer/redline.nvim" } }
+```
+
+### vim.pack (Neovim 0.12+)
+
+```lua
+vim.pack.add("martintrojer/fugitive-core.nvim")
+vim.pack.add("martintrojer/sl-fugitive")
 ```
 
 ## AI Review Workflow

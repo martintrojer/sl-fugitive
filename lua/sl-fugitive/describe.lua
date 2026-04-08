@@ -1,71 +1,27 @@
 local M = {}
 
+local open_editor = require("fugitive-core.views.describe").open_editor
+
 local function get_description(rev)
-  local init = require("sl-fugitive")
-  local result = init.run_vcs({ "log", "-r", rev, "-T", "{desc}\\n" })
+  local result = require("sl-fugitive").run_vcs({ "log", "-r", rev, "-T", "{desc}\\n" })
   return result and result:gsub("%s+$", "") or ""
 end
 
-local function open_editor(buffer_name, initial_text, help_lines, save_fn)
+local function setup_keymaps(bufnr, discard_and_close)
   local ui = require("sl-fugitive.ui")
 
-  local bufnr = vim.api.nvim_create_buf(false, false)
-  vim.bo[bufnr].buftype = "acwrite"
-  vim.bo[bufnr].filetype = "gitcommit"
-  vim.bo[bufnr].swapfile = false
-  vim.bo[bufnr].bufhidden = "hide"
-  pcall(vim.api.nvim_buf_set_name, bufnr, buffer_name)
-
-  local lines = {}
-  for _, line in ipairs(help_lines) do
-    table.insert(lines, line)
-  end
-  table.insert(lines, "")
-  for _, line in ipairs(vim.split(initial_text or "", "\n", { plain = true })) do
-    table.insert(lines, line)
-  end
-
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-
-  vim.api.nvim_create_autocmd("BufWriteCmd", {
-    buffer = bufnr,
-    callback = function()
-      local content = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-      local filtered = {}
-      for _, line in ipairs(content) do
-        if not line:match("^%s*#") then
-          table.insert(filtered, line)
-        end
-      end
-
-      local text = table.concat(filtered, "\n"):gsub("^%s+", ""):gsub("%s+$", "")
-      if save_fn(text) then
-        vim.bo[bufnr].modified = false
-        vim.cmd(ui.close_cmd())
-      end
-    end,
-  })
-
-  ui.map(bufnr, "n", "q", function()
-    vim.bo[bufnr].modified = false
-    vim.cmd(ui.close_cmd())
-  end)
-
   ui.map(bufnr, "n", "gl", function()
-    vim.bo[bufnr].modified = false
-    vim.cmd(ui.close_cmd())
+    discard_and_close()
     require("sl-fugitive").sl("log")
   end)
 
   ui.map(bufnr, "n", "gs", function()
-    vim.bo[bufnr].modified = false
-    vim.cmd(ui.close_cmd())
+    discard_and_close()
     require("sl-fugitive").sl("status")
   end)
 
   ui.map(bufnr, "n", "gb", function()
-    vim.bo[bufnr].modified = false
-    vim.cmd(ui.close_cmd())
+    discard_and_close()
     require("sl-fugitive").sl("bookmark")
   end)
 
@@ -84,13 +40,6 @@ local function open_editor(buffer_name, initial_text, help_lines, save_fn)
       "  g?      This help",
     })
   end)
-
-  ui.open_pane()
-  vim.api.nvim_win_set_buf(0, bufnr)
-  vim.api.nvim_win_set_cursor(0, { #help_lines + 2, 0 })
-  ui.set_statusline(bufnr, buffer_name)
-
-  return bufnr
 end
 
 function M.describe(rev)
@@ -109,7 +58,10 @@ function M.describe(rev)
       return true
     end
     return false
-  end)
+  end, {
+    setup_keymaps = setup_keymaps,
+    statusline = "sl-describe:" .. rev,
+  })
 end
 
 function M.commit()
@@ -129,7 +81,10 @@ function M.commit()
       return true
     end
     return false
-  end)
+  end, {
+    setup_keymaps = setup_keymaps,
+    statusline = "sl-commit",
+  })
 end
 
 return M
