@@ -216,7 +216,7 @@ local function setup_keymaps(bufnr)
       ui.warn("Use normal file deletion for untracked files")
       return
     end
-    if ui.confirm("Revert " .. file .. " to parent revision?") then
+    if ui.confirm("Revert " .. file .. " to parent revision") then
       local result = require("sl-fugitive").run_vcs({ "revert", "--no-backup", file })
       if result then
         ui.info("Reverted: " .. file)

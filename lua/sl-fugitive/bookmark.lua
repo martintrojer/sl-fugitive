@@ -57,11 +57,11 @@ local function setup_keymaps(bufnr)
   pcall(vim.api.nvim_buf_set_var, bufnr, "sl_bookmark_keymaps_set", true)
 
   ui.map(bufnr, "n", "c", function()
-    vim.ui.input({ prompt = "New bookmark name: " }, function(name)
+    ui.input("New bookmark name", function(name)
       if not name or name == "" then
         return
       end
-      vim.ui.input({ prompt = "At revision (default .): " }, function(rev)
+      ui.input("At revision (default .)", function(rev)
         if not rev or rev == "" then
           rev = "."
         end
@@ -72,7 +72,7 @@ local function setup_keymaps(bufnr)
 
   ui.map(bufnr, "n", "d", function()
     local name = bookmark_from_line(vim.api.nvim_get_current_line())
-    if name and ui.confirm("Delete bookmark '" .. name .. "'?") then
+    if name and ui.confirm("Delete bookmark '" .. name .. "'") then
       run_and_refresh({ "bookmark", "-d", name }, "Deleted bookmark: " .. name)
     end
   end)
@@ -82,7 +82,7 @@ local function setup_keymaps(bufnr)
     if not name then
       return
     end
-    vim.ui.input({ prompt = "Move '" .. name .. "' to revision: " }, function(rev)
+    ui.input("Move '" .. name .. "' to revision", function(rev)
       if rev and rev ~= "" then
         run_and_refresh({ "bookmark", name, "-r", rev }, "Moved " .. name .. " -> " .. rev)
       end
@@ -94,7 +94,7 @@ local function setup_keymaps(bufnr)
     if not name then
       return
     end
-    vim.ui.input({ prompt = "Rename '" .. name .. "' to: " }, function(new_name)
+    ui.input("Rename '" .. name .. "' to", function(new_name)
       if new_name and new_name ~= "" then
         run_and_refresh(
           { "bookmark", "-m", name, new_name },
@@ -118,17 +118,14 @@ local function setup_keymaps(bufnr)
     if not name then
       return
     end
-    vim.ui.input(
-      { prompt = "Push bookmark '" .. name .. "' to remote name: " },
-      function(remote_name)
-        if remote_name and remote_name ~= "" then
-          run_and_refresh(
-            { "push", "--to", remote_name, "--create" },
-            "Pushed bookmark to " .. remote_name
-          )
-        end
+    ui.input("Push bookmark '" .. name .. "' to remote name", function(remote_name)
+      if remote_name and remote_name ~= "" then
+        run_and_refresh(
+          { "push", "--to", remote_name, "--create" },
+          "Pushed bookmark to " .. remote_name
+        )
       end
-    )
+    end)
   end)
 
   local init = require("sl-fugitive")

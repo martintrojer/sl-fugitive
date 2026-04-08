@@ -215,7 +215,7 @@ end
 local function run_rebase(node, include_descendants)
   local flag = include_descendants and "-s" or "-r"
   local label = include_descendants and "Rebase stack from " or "Rebase "
-  vim.ui.input({ prompt = label .. node .. " onto: " }, function(dest)
+  require("sl-fugitive.ui").input(label .. node .. " onto", function(dest)
     if not dest or dest:match("^%s*$") then
       return
     end
@@ -239,12 +239,10 @@ local function run_split(node)
 end
 
 local function run_fold_from(node)
-  if
-    not require("sl-fugitive.ui").confirm("Fold linearly from current commit to " .. node .. "?")
-  then
+  if not require("sl-fugitive.ui").confirm("Fold linearly from current commit to " .. node) then
     return
   end
-  vim.ui.input({ prompt = "Folded commit message: " }, function(message)
+  require("sl-fugitive.ui").input("Folded commit message", function(message)
     if not message or message:match("^%s*$") then
       return
     end
@@ -274,7 +272,7 @@ end
 
 local function run_rebase_abort()
   local ui = require("sl-fugitive.ui")
-  if not ui.confirm("Abort the current rebase?") then
+  if not ui.confirm("Abort the current rebase") then
     return
   end
   local result = require("sl-fugitive").run_vcs({ "rebase", "--abort" })
@@ -294,10 +292,7 @@ end
 
 local function run_metaedit(node)
   local meta = get_changeset_metadata(node)
-  vim.ui.input({
-    prompt = "Metaedit message for " .. (meta.node or node) .. ": ",
-    default = meta.summary or "",
-  }, function(message)
+  require("sl-fugitive.ui").input("Metaedit message for " .. (meta.node or node), function(message)
     if not message or message:match("^%s*$") then
       return
     end
@@ -306,12 +301,12 @@ local function run_metaedit(node)
       require("sl-fugitive.ui").info("Updated metadata for " .. (meta.node or node))
       require("sl-fugitive").refresh_views()
     end
-  end)
+  end, { default = meta.summary or "" })
 end
 
 local function run_amend_to(node)
   local ui = require("sl-fugitive.ui")
-  if not ui.confirm("Amend current working changes into " .. node .. "?") then
+  if not ui.confirm("Amend current working changes into " .. node) then
     return
   end
   local result = require("sl-fugitive").run_vcs({ "amend", "--to", node })
@@ -323,7 +318,7 @@ end
 
 local function run_hide(node)
   local ui = require("sl-fugitive.ui")
-  if not ui.confirm("Hide " .. node .. " and its descendants?") then
+  if not ui.confirm("Hide " .. node .. " and its descendants") then
     return
   end
   local result = require("sl-fugitive").run_vcs({ "hide", "-r", node })
