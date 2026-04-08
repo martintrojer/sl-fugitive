@@ -76,16 +76,20 @@ local function toggle_inline_diff(bufnr)
     return
   end
 
-  local diff_output = require("sl-fugitive").run_vcs({ "diff", "--git", file })
+  local diff_output = require("sl-fugitive").run_vcs({ "diff", "--git", "--color=always", file })
   if not diff_output or diff_output:match("^%s*$") then
     ui.warn("No diff available for " .. file)
     return
   end
 
+  local ansi = require("sl-fugitive.ansi")
   local diff_lines = {}
+  local line_highlights = {}
   for _, dl in ipairs(vim.split(diff_output, "\n", { plain = true })) do
     if dl ~= "" then
-      table.insert(diff_lines, "    " .. dl)
+      local clean, highlights = ansi.parse_ansi_colors(dl)
+      table.insert(diff_lines, "    " .. clean)
+      table.insert(line_highlights, highlights)
     end
   end
 
@@ -103,18 +107,28 @@ local function toggle_inline_diff(bufnr)
   })
   set_inline_diff_state(bufnr, state)
 
-  for i = line_nr, line_nr + #diff_lines - 1 do
-    local dl = diff_lines[i - line_nr + 1]
-    local hl
-    if dl:match("^    %+") then
-      hl = "DiffAdd"
-    elseif dl:match("^    %-") then
-      hl = "DiffDelete"
-    elseif dl:match("^    @@") then
-      hl = "DiffChange"
-    end
-    if hl then
-      vim.api.nvim_buf_add_highlight(bufnr, -1, hl, i, 0, -1)
+  -- Apply parsed ANSI highlights
+  ansi.setup_diff_highlighting(bufnr, nil, { prefix = "SlStatus" })
+  for i, highlights in ipairs(line_highlights) do
+    local buf_line = line_nr + i - 1
+    for _, hl in ipairs(highlights) do
+      local group = hl.group
+      if group == "Green" or group == "LightGreen" then
+        group = "SlStatusAdd"
+      elseif group == "Red" or group == "LightRed" then
+        group = "SlStatusDelete"
+      elseif group == "Yellow" or group == "LightYellow" then
+        group = "SlStatusChange"
+      end
+      pcall(
+        vim.api.nvim_buf_add_highlight,
+        bufnr,
+        ansi.ns,
+        group,
+        buf_line,
+        hl.col_start + 4,
+        hl.col_end + 4
+      )
     end
   end
 end

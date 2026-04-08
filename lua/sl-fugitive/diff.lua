@@ -21,7 +21,7 @@ end
 
 local function get_diff(file, rev)
   local init = require("sl-fugitive")
-  local args = { "diff", "--git" }
+  local args = { "diff", "--git", "--color=always" }
   if rev and rev ~= "" then
     table.insert(args, "-c")
     table.insert(args, rev)

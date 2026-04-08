@@ -141,7 +141,7 @@ end
 
 function M.show_changeset(node, opts)
   local meta = get_changeset_metadata(node)
-  local output = require("sl-fugitive").run_vcs({ "log", "-p", "-r", node })
+  local output = require("sl-fugitive").run_vcs({ "log", "-p", "-r", node, "--color=always" })
   if not output then
     return
   end
