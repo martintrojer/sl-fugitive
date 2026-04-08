@@ -51,9 +51,32 @@ local function open_editor(buffer_name, initial_text, help_lines, save_fn)
     vim.cmd(ui.close_cmd())
   end)
 
+  ui.map(bufnr, "n", "gl", function()
+    vim.bo[bufnr].modified = false
+    vim.cmd(ui.close_cmd())
+    require("sl-fugitive").sl("log")
+  end)
+
+  ui.map(bufnr, "n", "gs", function()
+    vim.bo[bufnr].modified = false
+    vim.cmd(ui.close_cmd())
+    require("sl-fugitive").sl("status")
+  end)
+
+  ui.map(bufnr, "n", "gb", function()
+    vim.bo[bufnr].modified = false
+    vim.cmd(ui.close_cmd())
+    require("sl-fugitive").sl("bookmark")
+  end)
+
   ui.map(bufnr, "n", "g?", function()
     ui.help_popup("sl-fugitive Editor", {
       "Sapling editor buffer",
+      "",
+      "Views:",
+      "  gb      Switch to bookmark view",
+      "  gl      Switch to smartlog",
+      "  gs      Switch to status view",
       "",
       "Other:",
       "  :w      Save and run Sapling command",

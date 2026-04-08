@@ -93,7 +93,7 @@ local function setup_diff_keymaps(bufnr, filename, review_ctx)
     elseif #files == 1 then
       M.show_sidebyside(files[1])
     else
-      vim.ui.select(files, { prompt = "Side-by-side diff for:" }, function(choice)
+      vim.ui.select(files, { prompt = "Side-by-side diff for: " }, function(choice)
         if choice then
           M.show_sidebyside(choice)
         end

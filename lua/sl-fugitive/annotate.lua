@@ -185,6 +185,21 @@ function M.show(filename, rev)
     end)
   end
 
+  ui.map(ann_buf, "n", "gl", function()
+    close_annotate()
+    require("sl-fugitive").sl("log")
+  end)
+
+  ui.map(ann_buf, "n", "gs", function()
+    close_annotate()
+    require("sl-fugitive").sl("status")
+  end)
+
+  ui.map(ann_buf, "n", "gb", function()
+    close_annotate()
+    require("sl-fugitive").sl("bookmark")
+  end)
+
   ui.map(ann_buf, "n", "q", close_annotate)
 
   ui.map(ann_buf, "n", "g?", function()
@@ -194,6 +209,11 @@ function M.show(filename, rev)
       "Actions:",
       "  <CR>    Show changeset for this line",
       "  gR      Open review buffer",
+      "",
+      "Views:",
+      "  gb      Switch to bookmark view",
+      "  gl      Switch to smartlog",
+      "  gs      Switch to status view",
       "",
       "Other:",
       "  q       Close annotation",
