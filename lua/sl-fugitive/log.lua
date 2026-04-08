@@ -356,13 +356,25 @@ function M.setup_detail_keymaps(bufnr, review_ctx)
     elseif #files == 1 then
       local parent = ui.file_at_rev(files[1], rev)
       local current = ui.file_at_rev(files[1], rev .. "^")
-      ui.open_sidebyside(current, files[1] .. " (" .. rev .. "^)", parent, files[1] .. " (" .. rev .. ")", files[1])
+      ui.open_sidebyside(
+        current,
+        files[1] .. " (" .. rev .. "^)",
+        parent,
+        files[1] .. " (" .. rev .. ")",
+        files[1]
+      )
     else
       ui.select(files, "Side-by-side diff for", function(choice)
         if choice then
           local parent = ui.file_at_rev(choice, rev .. "^")
           local current = ui.file_at_rev(choice, rev)
-          ui.open_sidebyside(parent, choice .. " (" .. rev .. "^)", current, choice .. " (" .. rev .. ")", choice)
+          ui.open_sidebyside(
+            parent,
+            choice .. " (" .. rev .. "^)",
+            current,
+            choice .. " (" .. rev .. ")",
+            choice
+          )
         end
       end)
     end
@@ -485,7 +497,9 @@ local function setup_keymaps(bufnr)
     run_absorb()
   end)
 
-  ui.map(bufnr, "n", "rm", function()
+  ui.map(bufnr, "n", "c", function() end)
+
+  ui.map(bufnr, "n", "cc", function()
     local node = selected_node()
     if node then
       run_metaedit(node)
@@ -531,7 +545,7 @@ local function setup_keymaps(bufnr)
         "  d        Show diff for changeset",
         "  go       Goto selected commit",
         "  ra       Absorb current working changes into the stack",
-        "  rm       Edit selected commit metadata/message",
+        "  cc       Edit selected commit message",
         "  rr       Rebase selected commit onto a destination",
         "  rs       Rebase selected commit and descendants onto a destination",
         "  ri       Interactive rebase from selected commit (:q to cancel)",
