@@ -6,17 +6,20 @@ local function parse_annotation_line(line)
   if not line then
     return nil
   end
+  -- Format: user hash date: content (with optional leading spaces)
   local user, node, date, content =
-    line:match("^(%S+)%s+([0-9a-f]+)%s+(%d%d%d%d%-%d%d%-%d%d):%s?(.*)$")
+    line:match("^%s*(%S+)%s+([0-9a-f]+)%s+(%d%d%d%d%-%d%d%-%d%d):%s?(.*)$")
   if node then
     return { user = user, node = node, date = date, content = content or "" }
   end
+  -- Format: user hash: content
   local user_only
-  user_only, node, content = line:match("^(%S+)%s+([0-9a-f]+):%s?(.*)$")
+  user_only, node, content = line:match("^%s*(%S+)%s+([0-9a-f]+):%s?(.*)$")
   if node then
     return { user = user_only, node = node, content = content or "" }
   end
-  node, content = line:match("^([0-9a-f]+):%s?(.*)$")
+  -- Format: hash: content
+  node, content = line:match("^%s*([0-9a-f]+):%s?(.*)$")
   if node then
     return { node = node, content = content or "" }
   end
