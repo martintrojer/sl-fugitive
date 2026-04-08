@@ -8,21 +8,6 @@ M.config = {
 
 local last_repo_root = nil
 
-local COMPLETE_COMMANDS = {
-  "annotate",
-  "blame",
-  "bookmark",
-  "browse",
-  "commit",
-  "describe",
-  "diff",
-  "log",
-  "pull",
-  "push",
-  "review",
-  "status",
-}
-
 function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", M.config, opts or {})
 
@@ -74,9 +59,7 @@ function M.setup(opts)
   end
 end
 
-local function repo_markers()
-  return { ".sl", ".hg", ".git/sl" }
-end
+local REPO_MARKERS = { ".sl", ".hg", ".git/sl" }
 
 local function find_repo_root()
   local search_paths = {}
@@ -90,7 +73,7 @@ local function find_repo_root()
   table.insert(search_paths, vim.fn.getcwd())
 
   for _, path in ipairs(search_paths) do
-    for _, marker in ipairs(repo_markers()) do
+    for _, marker in ipairs(REPO_MARKERS) do
       local found = vim.fs.find(marker, { path = path, upward = true, type = "directory" })
       if #found > 0 then
         local marker_path = found[1]
@@ -105,7 +88,7 @@ local function find_repo_root()
   end
 
   if last_repo_root then
-    for _, marker in ipairs(repo_markers()) do
+    for _, marker in ipairs(REPO_MARKERS) do
       if vim.fn.isdirectory(last_repo_root .. "/" .. marker) == 1 then
         return last_repo_root
       end
@@ -329,23 +312,8 @@ function M.refresh_views()
   end)
 end
 
-function M.refresh_log()
-  M.refresh_views()
-end
-
-function M.undo()
-  require("sl-fugitive.ui").warn("Undo is not implemented yet for sl-fugitive")
-  return false
-end
-
-function M.complete(arglead)
-  local matches = {}
-  for _, item in ipairs(COMPLETE_COMMANDS) do
-    if item:find("^" .. vim.pesc(arglead)) then
-      table.insert(matches, item)
-    end
-  end
-  return matches
+function M.complete(arglead, cmdline, cursorpos)
+  return require("sl-fugitive.completion").complete(arglead, cmdline, cursorpos)
 end
 
 return M

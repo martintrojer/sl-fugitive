@@ -1,7 +1,7 @@
 local M = {}
 
 -- Dedicated namespace for sl-fugitive ANSI highlights to avoid clearing others
-local ns = vim.api.nvim_create_namespace("jj_fugitive_ansi")
+local ns = vim.api.nvim_create_namespace("sl_fugitive_ansi")
 M.ns = ns
 
 -- ANSI color code constants
@@ -197,7 +197,7 @@ end
 -- Setup standard diff highlighting and apply parsed ANSI colors
 function M.setup_diff_highlighting(bufnr, highlights, opts)
   opts = opts or {}
-  local prefix = opts.prefix or "JjDiff"
+  local prefix = opts.prefix or "SlDiff"
 
   vim.api.nvim_buf_call(bufnr, function()
     -- Set the filetype to 'diff' for standard diff highlighting
@@ -302,7 +302,7 @@ function M.create_colored_buffer(content, buffer_name, header_lines, opts)
   M.setup_diff_highlighting(bufnr, highlights, opts)
 
   -- Mark this as a sl-fugitive plugin buffer to enable safe updates
-  pcall(vim.api.nvim_buf_set_var, bufnr, "jj_plugin_buffer", true)
+  pcall(vim.api.nvim_buf_set_var, bufnr, "sl_plugin_buffer", true)
 
   vim.bo[bufnr].modifiable = false
   vim.bo[bufnr].modified = false

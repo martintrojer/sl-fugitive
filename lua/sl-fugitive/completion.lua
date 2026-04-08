@@ -34,7 +34,8 @@ local function get_aliases()
     return cached_aliases
   end
   cached_aliases = {}
-  local output = vim.fn.system({ "sl", "config", "list", "alias" })
+  local executable = require("sl-fugitive").config.command or "sl"
+  local output = vim.fn.system({ executable, "config", "list", "alias" })
   if vim.v.shell_error == 0 and output then
     for alias in output:gmatch("aliases%.([%w_-]+)") do
       table.insert(cached_aliases, alias)
@@ -73,13 +74,8 @@ end
 
 --- Commands known to have subcommands.
 local COMMANDS_WITH_SUBS = {
-  "git",
   "bookmark",
   "config",
-  "operation",
-  "op",
-  "workspace",
-  "file",
 }
 
 --- Smart completion for :S command.

@@ -41,7 +41,7 @@ lua/sl-fugitive/
 ├── bookmark.lua      # Bookmark management
 ├── browse.lua        # Forge URL construction from `sl paths`
 ├── describe.lua      # Describe and commit editor buffers
-├── review.lua        # Shared AI review buffer and comment capture
+├── completion.lua    # Smart tab completion for :S
 ├── ansi.lua          # ANSI color handling
 └── ui.lua            # Shared UI helpers
 

@@ -60,7 +60,7 @@ c         Create bookmark
 d         Delete bookmark
 m         Move bookmark to revision
 r         Rename bookmark
-g         Goto bookmark commit
+go        Goto bookmark commit
 p         Push bookmark to remote
 
 ==============================================================================

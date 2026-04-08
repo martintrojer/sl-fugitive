@@ -12,8 +12,8 @@ local function working_copy_file(filename)
     return ""
   end
   local path = repo_root .. "/" .. filename
-  local lines = vim.fn.readfile(path, "", 1)
-  if vim.v.shell_error ~= 0 then
+  local ok, lines = pcall(vim.fn.readfile, path)
+  if not ok then
     return ""
   end
   return table.concat(lines, "\n")

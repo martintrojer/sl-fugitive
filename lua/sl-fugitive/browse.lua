@@ -1,9 +1,7 @@
 local M = {}
 
-local init = require("sl-fugitive")
-
 local function strip_repo_prefix(url)
-  local repo_root = init.repo_root()
+  local repo_root = require("sl-fugitive").repo_root()
   if not repo_root or not url then
     return url
   end
@@ -59,7 +57,7 @@ function M.parse_remote_url(url)
 end
 
 local function get_paths()
-  local output = init.run_vcs({ "paths" })
+  local output = require("sl-fugitive").run_vcs({ "paths" })
   if not output then
     return {}
   end
@@ -116,7 +114,7 @@ local function relpath_for_current_buffer()
     return nil
   end
 
-  local repo_root = init.repo_root()
+  local repo_root = require("sl-fugitive").repo_root()
   if not repo_root then
     return nil
   end
@@ -128,14 +126,7 @@ local function relpath_for_current_buffer()
   return file:sub(#repo_root + 2)
 end
 
-local function node_from_line(line)
-  if not line then
-    return nil
-  end
-  return line:match(
-    "%f[%x]([0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]+)%f[^%x]"
-  )
-end
+local node_from_line = require("sl-fugitive.ui").node_from_line
 
 local function current_node()
   local bufnr = vim.api.nvim_get_current_buf()
@@ -157,7 +148,7 @@ local function current_node()
     return inline
   end
 
-  local output = init.run_vcs({ "log", "-r", ".", "-T", "{node|short}\\n" })
+  local output = require("sl-fugitive").run_vcs({ "log", "-r", ".", "-T", "{node|short}\\n" })
   if not output then
     return nil
   end
@@ -231,10 +222,8 @@ end
 
 local function open_url(url)
   if vim.ui and vim.ui.open then
-    local ok = vim.ui.open(url)
-    if ok ~= nil then
-      return ok
-    end
+    vim.ui.open(url)
+    return true
   end
 
   if vim.fn.has("mac") == 1 then

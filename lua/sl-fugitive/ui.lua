@@ -186,10 +186,6 @@ function M.help_popup(title, lines, opts)
   return help_buf, help_win
 end
 
-function M.show_aliases()
-  M.warn("Alias discovery is not implemented for sl-fugitive yet")
-end
-
 function M.file_at_rev(filename, rev)
   local init = require("sl-fugitive")
   local repo_root = init.repo_root()
@@ -242,6 +238,16 @@ function M.open_sidebyside(left_content, left_name, right_content, right_name, f
   end
 
   return left, right
+end
+
+--- Extract a hex node ID (10+ chars) from a line.
+function M.node_from_line(line)
+  if not line then
+    return nil
+  end
+  return line:match(
+    "%f[%x]([0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]+)%f[^%x]"
+  )
 end
 
 return M

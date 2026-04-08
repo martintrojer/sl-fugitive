@@ -14,14 +14,7 @@ local function bookmark_from_line(line)
   return line:match("^%s*%*?%s*([%w%._/-]+)%s+[0-9a-f]+%s*$")
 end
 
-local function node_from_line(line)
-  if not line then
-    return nil
-  end
-  return line:match(
-    "([0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]+)%s*$"
-  )
-end
+local node_from_line = require("sl-fugitive.ui").node_from_line
 
 local function run_and_refresh(args, msg)
   local result = require("sl-fugitive").run_vcs(args)
@@ -109,7 +102,7 @@ local function setup_keymaps(bufnr)
     end)
   end)
 
-  ui.map(bufnr, "n", "g", function()
+  ui.map(bufnr, "n", "go", function()
     local name = bookmark_from_line(vim.api.nvim_get_current_line())
     local node = node_from_line(vim.api.nvim_get_current_line())
     local target = name or node
@@ -170,7 +163,7 @@ local function setup_keymaps(bufnr)
       "  d       Delete bookmark",
       "  m       Move bookmark to revision",
       "  r       Rename bookmark",
-      "  g       Goto bookmark commit",
+      "  go      Goto bookmark commit",
       "  p       Push to remote bookmark",
       "",
       "Views:",
@@ -197,7 +190,6 @@ function M.refresh()
     return
   end
   ui.set_buf_lines(bufnr, format_lines(output))
-  setup_keymaps(bufnr)
 end
 
 function M.show()

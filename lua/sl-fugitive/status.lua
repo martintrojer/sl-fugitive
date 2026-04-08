@@ -24,11 +24,11 @@ local function status_code_from_line(line)
 end
 
 local function inline_diff_state(bufnr)
-  return require("sl-fugitive.ui").buf_var(bufnr, "jj_status_inline_diffs", {})
+  return require("sl-fugitive.ui").buf_var(bufnr, "sl_status_inline_diffs", {})
 end
 
 local function set_inline_diff_state(bufnr, state)
-  pcall(vim.api.nvim_buf_set_var, bufnr, "jj_status_inline_diffs", state)
+  pcall(vim.api.nvim_buf_set_var, bufnr, "sl_status_inline_diffs", state)
 end
 
 local function shift_inline_ranges(state, from_line, delta)
@@ -154,10 +154,10 @@ end
 
 local function setup_keymaps(bufnr)
   local ui = require("sl-fugitive.ui")
-  if ui.buf_var(bufnr, "hg_status_keymaps_set", false) then
+  if ui.buf_var(bufnr, "sl_status_keymaps_set", false) then
     return
   end
-  pcall(vim.api.nvim_buf_set_var, bufnr, "hg_status_keymaps_set", true)
+  pcall(vim.api.nvim_buf_set_var, bufnr, "sl_status_keymaps_set", true)
 
   ui.map(bufnr, "n", "<CR>", function()
     local file = file_from_line(vim.api.nvim_get_current_line())
@@ -227,9 +227,7 @@ local function setup_keymaps(bufnr)
     M.refresh()
   end)
 
-  ui.map(bufnr, "n", "gu", function()
-    require("sl-fugitive").undo()
-  end)
+
 
   ui.map(bufnr, "n", "gb", function()
     vim.cmd(ui.close_cmd())
@@ -265,7 +263,7 @@ local function setup_keymaps(bufnr)
       "",
       "Other:",
       "  indented lines show copy sources",
-      "  gu       Undo placeholder",
+
       "  R        Refresh",
       "  q        Close",
       "  g?       This help",

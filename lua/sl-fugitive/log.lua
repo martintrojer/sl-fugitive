@@ -60,12 +60,15 @@ local function workspace_status()
   return " Working copy: " .. table.concat(parts, ", ") .. " ", "dirty"
 end
 
-local function highlight_workspace_status(bufnr, status_line_nr, state)
-  vim.api.nvim_set_hl(0, "SlWsClean", { bg = "#2d4f2d", fg = "#a3d9a3", bold = true })
-  vim.api.nvim_set_hl(0, "SlWsDirty", { bg = "#4f4f2d", fg = "#d9d9a3", bold = true })
-  vim.api.nvim_set_hl(0, "SlWsConflict", { bg = "#4f2d2d", fg = "#d9a3a3", bold = true })
+-- Define workspace status highlight groups once
+vim.api.nvim_set_hl(0, "SlWsClean", { default = true, bg = "#2d4f2d", fg = "#a3d9a3", bold = true })
+vim.api.nvim_set_hl(0, "SlWsDirty", { default = true, bg = "#4f4f2d", fg = "#d9d9a3", bold = true })
+vim.api.nvim_set_hl(0, "SlWsConflict", { default = true, bg = "#4f2d2d", fg = "#d9a3a3", bold = true })
 
-  local hl_map = { clean = "SlWsClean", dirty = "SlWsDirty", conflict = "SlWsConflict" }
+local WS_HL_MAP = { clean = "SlWsClean", dirty = "SlWsDirty", conflict = "SlWsConflict" }
+
+local function highlight_workspace_status(bufnr, status_line_nr, state)
+  local hl_map = WS_HL_MAP
   local hl = hl_map[state]
   if hl and status_line_nr then
     vim.api.nvim_buf_clear_namespace(bufnr, ws_ns, 0, -1)
@@ -78,10 +81,9 @@ local function highlight_workspace_status(bufnr, status_line_nr, state)
   end
 end
 
-local WS_STATUS_LINE = 3 -- 0-indexed line number of workspace status in header
-
 local function log_header()
   local ws_text, ws_state = workspace_status()
+  local ws_line = 3 -- 0-indexed position of ws_text in lines below
   local lines = {
     "",
     "# sl Smartlog",
@@ -89,7 +91,7 @@ local function log_header()
     ws_text,
     "",
   }
-  return lines, ws_state
+  return lines, ws_state, ws_line
 end
 
 local function get_log_output()
@@ -99,14 +101,7 @@ local function get_log_output()
   })
 end
 
-local function node_from_line(line)
-  if not line then
-    return nil
-  end
-  return line:match(
-    "%f[%x]([0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]+)%f[^%x]"
-  )
-end
+local node_from_line = ui.node_from_line
 
 local function selected_node()
   local node = node_from_line(vim.api.nvim_get_current_line())
@@ -530,9 +525,9 @@ function M.refresh()
   if not output then
     return
   end
-  local header, ws_state = log_header()
+  local header, ws_state, ws_line = log_header()
   ansi.update_colored_buffer(bufnr, output, header, { prefix = "SlLog" })
-  highlight_workspace_status(bufnr, WS_STATUS_LINE, ws_state)
+  highlight_workspace_status(bufnr, ws_line, ws_state)
 end
 
 function M.show()
@@ -541,14 +536,14 @@ function M.show()
     return
   end
 
-  local header, ws_state = log_header()
+  local header, ws_state, ws_line = log_header()
   local bufnr = ui.find_buf(BUF_PATTERN)
   if bufnr then
     ansi.update_colored_buffer(bufnr, output, header, { prefix = "SlLog" })
   else
     bufnr = ansi.create_colored_buffer(output, BUF_NAME, header, { prefix = "SlLog" })
   end
-  highlight_workspace_status(bufnr, WS_STATUS_LINE, ws_state)
+  highlight_workspace_status(bufnr, ws_line, ws_state)
 
   setup_keymaps(bufnr)
   ui.ensure_visible(bufnr)
