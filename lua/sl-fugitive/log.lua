@@ -6,6 +6,8 @@ local ui = require("sl-fugitive.ui")
 local BUF_PATTERN = "sl%-log"
 local BUF_NAME = "sl-log"
 
+local ws_ns = vim.api.nvim_create_namespace("sl_workspace_status")
+
 local function workspace_status()
   local init = require("sl-fugitive")
 
@@ -19,13 +21,13 @@ local function workspace_status()
     if conflicts:match("^U ") then
       count = count + 1
     end
-    return "# CONFLICTS: " .. count .. " unresolved — sl resolve"
+    return " CONFLICTS: " .. count .. " unresolved — sl resolve ", "conflict"
   end
 
   -- Check working copy status
   local status = init.run_vcs({ "status" })
   if not status or status:match("^%s*$") then
-    return "# Working copy clean"
+    return " Working copy clean ", "clean"
   end
 
   local m, a, r, u = 0, 0, 0, 0
@@ -55,17 +57,39 @@ local function workspace_status()
   if u > 0 then
     table.insert(parts, u .. " untracked")
   end
-  return "# Working copy: " .. table.concat(parts, ", ")
+  return " Working copy: " .. table.concat(parts, ", ") .. " ", "dirty"
 end
 
+local function highlight_workspace_status(bufnr, status_line_nr, state)
+  vim.api.nvim_set_hl(0, "SlWsClean", { bg = "#2d4f2d", fg = "#a3d9a3", bold = true })
+  vim.api.nvim_set_hl(0, "SlWsDirty", { bg = "#4f4f2d", fg = "#d9d9a3", bold = true })
+  vim.api.nvim_set_hl(0, "SlWsConflict", { bg = "#4f2d2d", fg = "#d9a3a3", bold = true })
+
+  local hl_map = { clean = "SlWsClean", dirty = "SlWsDirty", conflict = "SlWsConflict" }
+  local hl = hl_map[state]
+  if hl and status_line_nr then
+    vim.api.nvim_buf_clear_namespace(bufnr, ws_ns, 0, -1)
+    vim.api.nvim_buf_set_extmark(bufnr, ws_ns, status_line_nr, 0, {
+      end_row = status_line_nr,
+      end_col = #(vim.api.nvim_buf_get_lines(bufnr, status_line_nr, status_line_nr + 1, false)[1] or ""),
+      hl_group = hl,
+      hl_eol = true,
+    })
+  end
+end
+
+local WS_STATUS_LINE = 3 -- 0-indexed line number of workspace status in header
+
 local function log_header()
-  return {
+  local ws_text, ws_state = workspace_status()
+  local lines = {
     "",
     "# sl Smartlog",
     "# Press g? for help",
-    workspace_status(),
+    ws_text,
     "",
   }
+  return lines, ws_state
 end
 
 local function get_log_output()
@@ -506,7 +530,9 @@ function M.refresh()
   if not output then
     return
   end
-  ansi.update_colored_buffer(bufnr, output, log_header(), { prefix = "SlLog" })
+  local header, ws_state = log_header()
+  ansi.update_colored_buffer(bufnr, output, header, { prefix = "SlLog" })
+  highlight_workspace_status(bufnr, WS_STATUS_LINE, ws_state)
 end
 
 function M.show()
@@ -515,12 +541,14 @@ function M.show()
     return
   end
 
+  local header, ws_state = log_header()
   local bufnr = ui.find_buf(BUF_PATTERN)
   if bufnr then
-    ansi.update_colored_buffer(bufnr, output, log_header(), { prefix = "SlLog" })
+    ansi.update_colored_buffer(bufnr, output, header, { prefix = "SlLog" })
   else
-    bufnr = ansi.create_colored_buffer(output, BUF_NAME, log_header(), { prefix = "SlLog" })
+    bufnr = ansi.create_colored_buffer(output, BUF_NAME, header, { prefix = "SlLog" })
   end
+  highlight_workspace_status(bufnr, WS_STATUS_LINE, ws_state)
 
   setup_keymaps(bufnr)
   ui.ensure_visible(bufnr)
