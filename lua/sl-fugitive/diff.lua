@@ -2,10 +2,6 @@ local M = {}
 
 local core_diff = require("fugitive-core.views.diff")
 
-local function set_buffer_context(bufnr, ctx)
-  pcall(vim.api.nvim_buf_set_var, bufnr, "sl_buffer_context", ctx)
-end
-
 local function working_copy_file(filename)
   local repo_root = require("sl-fugitive").repo_root()
   if not repo_root or not filename then
@@ -160,7 +156,7 @@ function M.show(opts)
     header = { "", "# Diff: " .. file_desc, "# Press g? for help, q to close", "" },
     statusline = "sl-diff: " .. file_desc,
     setup = function(bufnr)
-      set_buffer_context(bufnr, ctx)
+      pcall(vim.api.nvim_buf_set_var, bufnr, "sl_buffer_context", ctx)
       setup_diff_keymaps(bufnr, filename, ctx)
     end,
   })

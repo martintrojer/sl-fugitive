@@ -68,7 +68,7 @@ local function toggle_inline_diff(bufnr)
     return
   end
 
-  local ansi = require("sl-fugitive.ansi")
+  local ansi = require("fugitive-core.ansi")
   local diff_lines = {}
   local line_highlights = {}
   for _, dl in ipairs(vim.split(diff_output, "\n", { plain = true })) do

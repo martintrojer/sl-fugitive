@@ -13,7 +13,7 @@ local function bookmark_from_line(line)
   if not line or line == "" or line:match("^%s*#") then
     return nil
   end
-  return line:match("^%s*%*?%s*([%w%._/-]+)%s+[0-9a-f]+%s*$")
+  return line:match("^%s*%*?%s*([%w%._/@-]+)%s+[0-9a-f]+%s*$")
 end
 
 local node_from_line = require("sl-fugitive.ui").node_from_line

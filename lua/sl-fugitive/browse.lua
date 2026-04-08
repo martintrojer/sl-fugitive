@@ -2,10 +2,6 @@ local M = {}
 
 local core_browse = require("fugitive-core.views.browse")
 
-M.parse_remote_url = core_browse.parse_remote_url
-M.build_file_url = core_browse.build_file_url
-M.build_commit_url = core_browse.build_commit_url
-
 local function strip_repo_prefix(url)
   local repo_root = require("sl-fugitive").repo_root()
   if not repo_root or not url then

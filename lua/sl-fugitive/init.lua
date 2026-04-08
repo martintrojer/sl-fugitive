@@ -133,7 +133,7 @@ function M.run_vcs(args, opts)
   if type(args) == "string" then
     cmd = { "sh", "-c", executable .. " " .. args }
   elseif type(args) == "table" then
-    cmd = vim.list_extend({ executable }, vim.deepcopy(args))
+    cmd = vim.list_extend({ executable }, args)
   else
     ui.err("Invalid arguments to run_vcs")
     return nil

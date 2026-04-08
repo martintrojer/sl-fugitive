@@ -1,8 +1,5 @@
 local M = {}
 
-local ansi = require("sl-fugitive.ansi")
-local ui = require("sl-fugitive.ui")
-
 local BUF_PATTERN = "sl%-log"
 local BUF_NAME = "sl-log"
 
@@ -60,20 +57,29 @@ local function workspace_status()
   return " Working copy: " .. table.concat(parts, ", ") .. " ", "dirty"
 end
 
--- Define workspace status highlight groups once
-vim.api.nvim_set_hl(0, "SlWsClean", { default = true, bg = "#2d4f2d", fg = "#a3d9a3", bold = true })
-vim.api.nvim_set_hl(0, "SlWsDirty", { default = true, bg = "#4f4f2d", fg = "#d9d9a3", bold = true })
-vim.api.nvim_set_hl(
-  0,
-  "SlWsConflict",
-  { default = true, bg = "#4f2d2d", fg = "#d9a3a3", bold = true }
-)
-
 local WS_HL_MAP = { clean = "SlWsClean", dirty = "SlWsDirty", conflict = "SlWsConflict" }
+local ws_hl_defined = false
 
 local function highlight_workspace_status(bufnr, status_line_nr, state)
-  local hl_map = WS_HL_MAP
-  local hl = hl_map[state]
+  if not ws_hl_defined then
+    vim.api.nvim_set_hl(
+      0,
+      "SlWsClean",
+      { default = true, bg = "#2d4f2d", fg = "#a3d9a3", bold = true }
+    )
+    vim.api.nvim_set_hl(
+      0,
+      "SlWsDirty",
+      { default = true, bg = "#4f4f2d", fg = "#d9d9a3", bold = true }
+    )
+    vim.api.nvim_set_hl(
+      0,
+      "SlWsConflict",
+      { default = true, bg = "#4f2d2d", fg = "#d9a3a3", bold = true }
+    )
+    ws_hl_defined = true
+  end
+  local hl = WS_HL_MAP[state]
   if hl and status_line_nr then
     vim.api.nvim_buf_clear_namespace(bufnr, ws_ns, 0, -1)
     vim.api.nvim_buf_set_extmark(bufnr, ws_ns, status_line_nr, 0, {
@@ -107,12 +113,14 @@ local function get_log_output()
   })
 end
 
-local node_from_line = ui.node_from_line
+local function node_from_line(line)
+  return require("sl-fugitive.ui").node_from_line(line)
+end
 
 local function selected_node()
   local node = node_from_line(vim.api.nvim_get_current_line())
   if not node then
-    ui.warn("Place the cursor on a changeset line")
+    require("sl-fugitive.ui").warn("Place the cursor on a changeset line")
     return nil
   end
   return node
@@ -159,6 +167,8 @@ function M.show_changeset(node, opts)
   end
 
   local bufname = "sl-show: " .. (meta.node or node)
+  local ui = require("sl-fugitive.ui")
+  local ansi = require("fugitive-core.ansi")
   local bufnr = ui.find_buf("^" .. vim.pesc(bufname) .. " %[%d+%]$")
   if bufnr then
     ansi.update_colored_buffer(bufnr, output, header, { prefix = "SlShow" })
@@ -189,9 +199,8 @@ end
 local function run_goto(node)
   local result = require("sl-fugitive").run_vcs({ "goto", node })
   if result then
-    ui.info("Goto " .. node)
-    M.refresh()
-    require("sl-fugitive.status").refresh()
+    require("sl-fugitive.ui").info("Goto " .. node)
+    require("sl-fugitive").refresh_views()
   end
 end
 
@@ -204,7 +213,7 @@ local function run_rebase(node, include_descendants)
     end
     local result = require("sl-fugitive").run_vcs({ "rebase", flag, node, "-d", dest })
     if result then
-      ui.info("Rebased " .. node .. " onto " .. dest)
+      require("sl-fugitive.ui").info("Rebased " .. node .. " onto " .. dest)
       require("sl-fugitive").refresh_views()
     end
   end)
@@ -222,7 +231,9 @@ local function run_split(node)
 end
 
 local function run_fold_from(node)
-  if not ui.confirm("Fold linearly from current commit to " .. node .. "?") then
+  if
+    not require("sl-fugitive.ui").confirm("Fold linearly from current commit to " .. node .. "?")
+  then
     return
   end
   vim.ui.input({ prompt = "Folded commit message: " }, function(message)
@@ -231,7 +242,7 @@ local function run_fold_from(node)
     end
     local result = require("sl-fugitive").run_vcs({ "fold", "--from", "-r", node, "-m", message })
     if result then
-      ui.info("Folded from current commit to " .. node)
+      require("sl-fugitive.ui").info("Folded from current commit to " .. node)
       require("sl-fugitive").refresh_views()
     end
   end)
@@ -240,36 +251,36 @@ end
 local function run_restack()
   local result = require("sl-fugitive").run_vcs({ "restack" })
   if result then
-    ui.info("Restacked current stack")
-    M.refresh()
+    require("sl-fugitive.ui").info("Restacked current stack")
+    require("sl-fugitive").refresh_views()
   end
 end
 
 local function run_rebase_continue()
   local result = require("sl-fugitive").run_vcs({ "rebase", "--continue" })
   if result then
-    ui.info("Continued rebase")
-    M.refresh()
+    require("sl-fugitive.ui").info("Continued rebase")
+    require("sl-fugitive").refresh_views()
   end
 end
 
 local function run_rebase_abort()
+  local ui = require("sl-fugitive.ui")
   if not ui.confirm("Abort the current rebase?") then
     return
   end
   local result = require("sl-fugitive").run_vcs({ "rebase", "--abort" })
   if result then
     ui.info("Aborted rebase")
-    M.refresh()
+    require("sl-fugitive").refresh_views()
   end
 end
 
 local function run_absorb()
   local result = require("sl-fugitive").run_vcs({ "absorb", "-a" })
   if result then
-    ui.info("Absorbed working changes into current stack")
-    M.refresh()
-    require("sl-fugitive.status").refresh()
+    require("sl-fugitive.ui").info("Absorbed working changes into current stack")
+    require("sl-fugitive").refresh_views()
   end
 end
 
@@ -284,37 +295,38 @@ local function run_metaedit(node)
     end
     local result = require("sl-fugitive").run_vcs({ "metaedit", "-r", node, "-m", message })
     if result then
-      ui.info("Updated metadata for " .. (meta.node or node))
-      M.refresh()
+      require("sl-fugitive.ui").info("Updated metadata for " .. (meta.node or node))
+      require("sl-fugitive").refresh_views()
     end
   end)
 end
 
 local function run_amend_to(node)
+  local ui = require("sl-fugitive.ui")
   if not ui.confirm("Amend current working changes into " .. node .. "?") then
     return
   end
   local result = require("sl-fugitive").run_vcs({ "amend", "--to", node })
   if result then
     ui.info("Amended working changes into " .. node)
-    M.refresh()
-    require("sl-fugitive.status").refresh()
+    require("sl-fugitive").refresh_views()
   end
 end
 
 local function run_hide(node)
+  local ui = require("sl-fugitive.ui")
   if not ui.confirm("Hide " .. node .. " and its descendants?") then
     return
   end
   local result = require("sl-fugitive").run_vcs({ "hide", "-r", node })
   if result then
     ui.info("Hid " .. node)
-    M.refresh()
-    require("sl-fugitive.status").refresh()
+    require("sl-fugitive").refresh_views()
   end
 end
 
 function M.setup_detail_keymaps(bufnr, review_ctx)
+  local ui = require("sl-fugitive.ui")
   ui.map(bufnr, "n", "q", function()
     vim.cmd(ui.close_cmd())
   end)
@@ -365,6 +377,7 @@ function M.setup_detail_keymaps(bufnr, review_ctx)
 end
 
 local function setup_keymaps(bufnr)
+  local ui = require("sl-fugitive.ui")
   if ui.buf_var(bufnr, "sl_log_keymaps_set", false) then
     return
   end
@@ -523,6 +536,8 @@ local function setup_keymaps(bufnr)
 end
 
 function M.refresh()
+  local ui = require("sl-fugitive.ui")
+  local ansi = require("fugitive-core.ansi")
   local bufnr = ui.find_buf(BUF_PATTERN)
   if not bufnr then
     return
@@ -542,6 +557,8 @@ function M.refresh()
 end
 
 function M.show()
+  local ui = require("sl-fugitive.ui")
+  local ansi = require("fugitive-core.ansi")
   local output = get_log_output()
   if not output then
     return
