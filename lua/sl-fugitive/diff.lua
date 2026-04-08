@@ -1,6 +1,6 @@
 local M = {}
 
-local ansi = require("sl-fugitive.ansi")
+local core_diff = require("fugitive-core.views.diff")
 
 local function set_buffer_context(bufnr, ctx)
   pcall(vim.api.nvim_buf_set_var, bufnr, "sl_buffer_context", ctx)
@@ -79,15 +79,7 @@ local function setup_diff_keymaps(bufnr, filename, review_ctx)
       M.show_sidebyside(filename)
       return
     end
-    -- Multi-file diff: parse filenames and let user pick
-    local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-    local files = {}
-    for _, line in ipairs(lines) do
-      local f = line:match("^diff %-%-git a/.+ b/(.+)$")
-      if f and not vim.tbl_contains(files, f) then
-        table.insert(files, f)
-      end
-    end
+    local files = core_diff.parse_diff_files(bufnr)
     if #files == 0 then
       ui.warn("No files found in diff")
     elseif #files == 1 then
@@ -145,31 +137,8 @@ function M.show(opts)
     end
   end
 
-  local output = get_diff(filename, rev)
-  if not output then
-    return
-  end
-  if output:match("^%s*$") then
-    require("sl-fugitive.ui").warn("No changes in " .. (filename or rev or "working copy"))
-    return
-  end
-
-  local ui = require("sl-fugitive.ui")
   local file_desc = filename or rev or "working copy"
-  local header = {
-    "",
-    "# Diff: " .. file_desc,
-    "# Press g? for help, q to close",
-    "",
-  }
   local bufname = "sl-diff: " .. file_desc
-  local bufnr = ui.find_buf("^" .. vim.pesc(bufname) .. " %[%d+%]$")
-
-  if bufnr then
-    ansi.update_colored_buffer(bufnr, output, header, { prefix = "SlDiff" })
-  else
-    bufnr = ansi.create_colored_buffer(output, bufname, header, { prefix = "SlDiff" })
-  end
 
   local ctx = {
     source = rev and "commit diff" or "working copy diff",
@@ -177,10 +146,24 @@ function M.show(opts)
     rev = rev or ".",
     node = rev,
   }
-  set_buffer_context(bufnr, ctx)
-  setup_diff_keymaps(bufnr, filename, ctx)
-  ui.ensure_visible(bufnr)
-  ui.set_statusline(bufnr, "sl-diff: " .. file_desc)
+
+  core_diff.show({
+    get_diff = function()
+      return get_diff(filename, rev)
+    end,
+    on_empty = function()
+      require("sl-fugitive.ui").warn("No changes in " .. file_desc)
+    end,
+    buf_name = bufname,
+    buf_pattern = "^" .. vim.pesc(bufname) .. " %[%d+%]$",
+    ansi_prefix = "SlDiff",
+    header = { "", "# Diff: " .. file_desc, "# Press g? for help, q to close", "" },
+    statusline = "sl-diff: " .. file_desc,
+    setup = function(bufnr)
+      set_buffer_context(bufnr, ctx)
+      setup_diff_keymaps(bufnr, filename, ctx)
+    end,
+  })
 end
 
 function M.show_sidebyside(filename)

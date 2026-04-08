@@ -1,33 +1,7 @@
 local M = {}
 
---- Parse the Commands: section from `sl help` output.
-local function parse_commands(args)
-  local output = vim.fn.system(args)
-  if vim.v.shell_error ~= 0 then
-    return {}
-  end
+local parse_commands = require("fugitive-core.completion").parse_commands
 
-  local commands = {}
-  local in_commands = false
-
-  for line in output:gmatch("[^\r\n]+") do
-    if line:match("^Commands:") or line:match("^COMMANDS:") then
-      in_commands = true
-    elseif in_commands then
-      if line:match("^%S") then
-        break
-      end
-      local cmd = line:match("^%s+([a-z][a-z0-9%-]*)")
-      if cmd then
-        table.insert(commands, cmd)
-      end
-    end
-  end
-
-  return commands
-end
-
---- Cached user aliases (parsed once per session).
 local cached_aliases = nil
 local function get_aliases()
   if cached_aliases then
@@ -44,12 +18,10 @@ local function get_aliases()
   return cached_aliases
 end
 
---- Get bookmarks and recent node IDs for revision completion.
 local function get_revisions()
   local revisions = { "@", "@-", "@+", "root()" }
   local init = require("sl-fugitive")
 
-  -- Add bookmarks
   local bl = init.run_vcs({ "bookmarks", "-T", "{bookmark}\\n" })
   if bl then
     for name in bl:gmatch("[^\n]+") do
@@ -59,7 +31,6 @@ local function get_revisions()
     end
   end
 
-  -- Add recent node IDs
   local log = init.run_vcs({ "log", "-l", "20", "-T", "{node|short}\\n" })
   if log then
     for id in log:gmatch("[^\n]+") do
@@ -72,20 +43,17 @@ local function get_revisions()
   return revisions
 end
 
---- Commands known to have subcommands.
 local COMMANDS_WITH_SUBS = {
   "bookmark",
   "config",
 }
 
---- Smart completion for :S command.
 function M.complete(arglead, cmdline, _)
   local parts = vim.split(cmdline, "%s+")
   if parts[1] == "S" then
     table.remove(parts, 1)
   end
 
-  -- Filter empties
   local filtered = {}
   for _, p in ipairs(parts) do
     if p ~= "" then
@@ -96,11 +64,9 @@ function M.complete(arglead, cmdline, _)
 
   local completions = {}
 
-  -- Completing first argument (command name)
   if #parts == 0 or (#parts == 1 and not cmdline:match("%s$")) then
     local executable = require("sl-fugitive").config.command or "sl"
     local commands = parse_commands({ executable, "--help" })
-    -- Add our custom surfaces that might not appear in `sl --help`
     local custom = { "status", "diff", "log", "browse", "bookmark", "review", "annotate", "blame" }
     for _, c in ipairs(custom) do
       if not vim.tbl_contains(commands, c) then
@@ -108,7 +74,6 @@ function M.complete(arglead, cmdline, _)
       end
     end
 
-    -- Add user aliases from Sapling config (cached)
     for _, alias in ipairs(get_aliases()) do
       if not vim.tbl_contains(commands, alias) then
         table.insert(commands, alias)
@@ -123,7 +88,6 @@ function M.complete(arglead, cmdline, _)
   else
     local main_cmd = parts[1]
 
-    -- Check if previous arg is -r (revision flag) — complete with revisions
     local prev = parts[#parts - (cmdline:match("%s$") and 0 or 1)]
     if
       prev == "-r"
@@ -137,7 +101,6 @@ function M.complete(arglead, cmdline, _)
           table.insert(completions, rev)
         end
       end
-    -- Completing subcommand for commands that have them
     elseif
       vim.tbl_contains(COMMANDS_WITH_SUBS, main_cmd)
       and (#parts == 1 and cmdline:match("%s$") or (#parts == 2 and not cmdline:match("%s$")))
