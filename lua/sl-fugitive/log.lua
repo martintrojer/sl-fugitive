@@ -527,6 +527,15 @@ function M.refresh()
   if not bufnr then
     return
   end
+
+  -- Save cursor and viewport
+  local win = vim.fn.bufwinid(bufnr)
+  local cursor, topline
+  if win ~= -1 then
+    cursor = vim.api.nvim_win_get_cursor(win)
+    topline = vim.fn.getwininfo(win)[1].topline
+  end
+
   local output = get_log_output()
   if not output then
     return
@@ -534,6 +543,20 @@ function M.refresh()
   local header, ws_state, ws_line = log_header()
   ansi.update_colored_buffer(bufnr, output, header, { prefix = "SlLog" })
   highlight_workspace_status(bufnr, ws_line, ws_state)
+
+  -- Restore cursor and viewport
+  if win ~= -1 and vim.api.nvim_win_is_valid(win) then
+    local line_count = vim.api.nvim_buf_line_count(bufnr)
+    if cursor then
+      local row = math.min(cursor[1], line_count)
+      pcall(vim.api.nvim_win_set_cursor, win, { row, cursor[2] })
+    end
+    if topline then
+      vim.api.nvim_win_call(win, function()
+        vim.fn.winrestview({ topline = math.min(topline, line_count) })
+      end)
+    end
+  end
 end
 
 function M.show()
