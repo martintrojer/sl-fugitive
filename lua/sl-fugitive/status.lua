@@ -156,6 +156,11 @@ local function format_lines(output)
   return lines
 end
 
+local function file_at_cursor(bufnr)
+  return file_from_line(vim.api.nvim_get_current_line())
+    or core_list.file_from_inline_state(bufnr, INLINE_VAR)
+end
+
 local function setup_keymaps(bufnr)
   local ui = require("sl-fugitive.ui")
   if ui.buf_var(bufnr, "sl_status_keymaps_set", false) then
@@ -164,7 +169,7 @@ local function setup_keymaps(bufnr)
   pcall(vim.api.nvim_buf_set_var, bufnr, "sl_status_keymaps_set", true)
 
   ui.map(bufnr, "n", "<CR>", function()
-    local file = file_from_line(vim.api.nvim_get_current_line())
+    local file = file_at_cursor(bufnr)
     if file then
       vim.cmd(ui.close_cmd())
       vim.cmd("edit " .. vim.fn.fnameescape(file))
@@ -172,7 +177,7 @@ local function setup_keymaps(bufnr)
   end)
 
   ui.map(bufnr, "n", "o", function()
-    local file = file_from_line(vim.api.nvim_get_current_line())
+    local file = file_at_cursor(bufnr)
     if file then
       vim.cmd(ui.close_cmd())
       vim.cmd("split " .. vim.fn.fnameescape(file))
@@ -188,25 +193,25 @@ local function setup_keymaps(bufnr)
   end)
 
   ui.map(bufnr, "n", "d", function()
-    local file = file_from_line(vim.api.nvim_get_current_line())
+    local file = file_at_cursor(bufnr)
     if file then
       require("sl-fugitive.diff").show(file)
     end
   end)
 
   ui.map(bufnr, "n", "D", function()
-    local file = file_from_line(vim.api.nvim_get_current_line())
+    local file = file_at_cursor(bufnr)
     if file then
       require("sl-fugitive.diff").show_sidebyside(file)
     end
   end)
 
   ui.map(bufnr, "n", "x", function()
-    local file = file_from_line(vim.api.nvim_get_current_line())
-    local status = status_code_from_line(vim.api.nvim_get_current_line())
+    local file = file_at_cursor(bufnr)
     if not file then
       return
     end
+    local status = status_code_from_line(vim.api.nvim_get_current_line())
     if status == "?" then
       ui.warn("Use normal file deletion for untracked files")
       return
