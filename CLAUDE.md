@@ -22,8 +22,8 @@ Sapling smartlog, stack editing, and AI-assisted review.
 ## Core UX
 
 - `:S log` is the primary hub.
-- Smartlog actions lean into Sapling stack operations: `go`, `rr`, `ri`, `rs`,
-  `rf`, `rR`, `rc`, `rA`, `ra`, `rm`, `rt`, `rh`.
+- Smartlog actions lean into Sapling stack operations: `go`, `rr`, `rs`, `ri`,
+  `rS`, `rf`, `rR`, `rc`, `rA`, `ra`, `rm`, `rt`, `rh`.
 - Use `cR` in unified diff, show, and status inline diff buffers to append a
   review item.
 - Use `gR` to open the shared AI-ready review buffer.

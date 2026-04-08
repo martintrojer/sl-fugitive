@@ -1,14 +1,11 @@
 # sl-fugitive.nvim
 
-`sl-fugitive.nvim` is a Sapling-first Neovim plugin derived from the early
-`jj-fugitive` exploration and then sharpened around Sapling’s stack-aware log
-and history-editing model.
+A Sapling-first Neovim plugin inspired by vim-fugitive, built around
+Sapling’s smartlog, stack editing, and AI-assisted review.
 
-This project is no longer trying to straddle plain Mercurial and Sapling. The
-point is to lean into Sapling’s strengths, especially:
-- smartlog-style history as the main hub
-- stack-aware mutation workflows
-- strong diff/review navigation
+- Smartlog as the primary hub
+- Stack-aware mutation workflows (`rebase`, `split`, `fold`, `absorb`, `hide`)
+- Strong diff/review navigation
 - **AI review workflow** (optional, via [redline.nvim](https://github.com/martintrojer/redline.nvim)) — capture comments from unified diffs, show buffers, and status inline diffs into a shared AI-ready review packet
 
 ## Commands
@@ -39,8 +36,9 @@ point is to lean into Sapling’s strengths, especially:
 | `ra` | Absorb working changes into the stack |
 | `rm` | Edit selected commit message |
 | `rr` | Rebase selected commit onto a destination |
+| `rs` | Rebase selected commit and descendants onto a destination |
 | `ri` | Interactive rebase from selected commit |
-| `rs` | Split selected commit |
+| `rS` | Split selected commit |
 | `rt` | Amend working changes into selected commit |
 | `rf` | Fold linearly from current commit to selected |
 | `rh` | Hide selected commit and descendants |

@@ -30,8 +30,9 @@ go        Goto selected commit
 ra        Absorb working changes into the stack
 rm        Edit selected commit message (metaedit)
 rr        Rebase selected commit onto a prompted destination
+rs        Rebase selected commit and descendants onto a destination
 ri        Interactive rebase from selected commit (:q to cancel)
-rs        Split selected commit (:q to cancel)
+rS        Split selected commit (:q to cancel)
 rt        Amend working changes into selected commit
 rf        Fold linearly from current commit to selected
 rh        Hide selected commit and descendants

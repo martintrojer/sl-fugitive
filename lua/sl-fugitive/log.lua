@@ -170,15 +170,17 @@ local function run_goto(node)
   end
 end
 
-local function run_rebase(node)
-  vim.ui.input({ prompt = "Rebase " .. node .. " onto: " }, function(dest)
+local function run_rebase(node, include_descendants)
+  local flag = include_descendants and "-s" or "-r"
+  local label = include_descendants and "Rebase stack from " or "Rebase "
+  vim.ui.input({ prompt = label .. node .. " onto: " }, function(dest)
     if not dest or dest:match("^%s*$") then
       return
     end
-    local result = require("sl-fugitive").run_vcs({ "rebase", "-r", node, "-d", dest })
+    local result = require("sl-fugitive").run_vcs({ "rebase", flag, node, "-d", dest })
     if result then
       ui.info("Rebased " .. node .. " onto " .. dest)
-      M.refresh()
+      require("sl-fugitive").refresh_views()
     end
   end)
 end
@@ -367,11 +369,18 @@ local function setup_keymaps(bufnr)
   ui.map(bufnr, "n", "rr", function()
     local node = selected_node()
     if node then
-      run_rebase(node)
+      run_rebase(node, false)
     end
   end)
 
   ui.map(bufnr, "n", "rs", function()
+    local node = selected_node()
+    if node then
+      run_rebase(node, true)
+    end
+  end)
+
+  ui.map(bufnr, "n", "rS", function()
     local node = selected_node()
     if node then
       run_split(node)
@@ -465,8 +474,9 @@ local function setup_keymaps(bufnr)
       "  ra       Absorb current working changes into the stack",
       "  rm       Edit selected commit metadata/message",
       "  rr       Rebase selected commit onto a destination",
+      "  rs       Rebase selected commit and descendants onto a destination",
       "  ri       Interactive rebase from selected commit (:q to cancel)",
-      "  rs       Split selected commit (:q to cancel)",
+      "  rS       Split selected commit (:q to cancel)",
       "  rt       Amend working changes into selected commit",
       "  rf       Fold linearly from current commit to selected commit",
       "  rh       Hide selected commit and descendants",
