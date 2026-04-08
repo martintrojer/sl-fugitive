@@ -3,9 +3,17 @@
 A Sapling-first Neovim plugin inspired by vim-fugitive, built around
 Sapling’s smartlog, stack editing, and AI-assisted review.
 
-- Smartlog as the primary hub
-- Stack-aware mutation workflows (`rebase`, `split`, `fold`, `absorb`, `hide`)
-- Strong diff/review navigation
+## Features
+
+- **Smartlog as primary hub** — ANSI-colored smartlog with workspace status indicator (clean/dirty/conflict)
+- **Stack-aware mutations** — rebase, split, fold, absorb, hide, restack, interactive rebase, amend-to from the log view
+- **Diff viewer** — unified diff with ANSI colors, side-by-side with Neovim’s built-in diff mode, buffer reuse
+- **Status view** — changed files with inline diff toggle (`=`), open, split, diff, revert
+- **Describe & commit** — editor buffers for commit messages with `:w` to save
+- **Annotate/blame** — scroll-locked per-line attribution with `<CR>` to show changeset
+- **Bookmark management** — create, delete, move, rename, push in a dedicated buffer
+- **Smart completion** — tab completion for Sapling commands, subcommands, aliases, and revisions/bookmarks
+- **Browse** — open current file or commit on GitHub/GitLab/custom forges from any buffer
 - **AI review workflow** (optional, via [redline.nvim](https://github.com/martintrojer/redline.nvim)) — capture comments from unified diffs, show buffers, and status inline diffs into a shared AI-ready review packet
 
 ## Commands
@@ -34,7 +42,7 @@ Sapling’s smartlog, stack editing, and AI-assisted review.
 | `d` | Show diff for changeset |
 | `go` | Goto selected commit |
 | `ra` | Absorb working changes into the stack |
-| `rm` | Edit selected commit message |
+| `cc` | Edit selected commit message |
 | `rr` | Rebase selected commit onto a destination |
 | `rs` | Rebase selected commit and descendants onto a destination |
 | `ri` | Interactive rebase from selected commit |
@@ -54,8 +62,19 @@ require("sl-fugitive").setup({
   default_command = "log",
   open_mode = "split",   -- "split" or "tab"
   command = "sl",         -- path to Sapling CLI
+  forges = {              -- custom browse URL templates (optional)
+    { match = "myrepo", url = "https://code.example.com/myrepo/{path}?lines={lines}" },
+  },
 })
 ```
+
+### Custom Forges
+
+The `forges` option lets `:SBrowse` work with any code hosting service.
+Each entry has a `match` pattern tested against the remote URL from `sl paths`,
+and a `url` template with `{path}`, `{rev}`, and `{lines}` placeholders.
+If no lines are selected, `?lines={lines}` is stripped automatically.
+Custom forges are tried first — standard GitHub/GitLab parsing is the fallback.
 
 ## Requirements
 

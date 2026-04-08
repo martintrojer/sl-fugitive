@@ -141,7 +141,8 @@ function M.browse(remote_name)
   -- Try custom forges first
   local url
   if target.kind == "file" then
-    url = core_browse.build_custom_file_url(remote_url, target.path, target.line_start, target.line_end)
+    url =
+      core_browse.build_custom_file_url(remote_url, target.path, target.line_start, target.line_end)
   end
 
   if not url then

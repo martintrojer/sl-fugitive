@@ -28,7 +28,7 @@ SMARTLOG KEYMAPS                                *sl-fugitive-log-keymaps*
 d         Show diff for changeset
 go        Goto selected commit
 ra        Absorb working changes into the stack
-rm        Edit selected commit message (metaedit)
+cc        Edit selected commit message (metaedit)
 rr        Rebase selected commit onto a prompted destination
 rs        Rebase selected commit and descendants onto a destination
 ri        Interactive rebase from selected commit (:q to cancel)
@@ -98,8 +98,21 @@ CONFIGURATION                                   *sl-fugitive-config*
     default_command = "log",
     open_mode = "split",   -- "split" or "tab"
     command = "sl",         -- path to Sapling CLI
+    forges = {              -- custom browse URL templates (optional)
+      { match = "myrepo", url = "https://code.example.com/myrepo/{path}?lines={lines}" },
+    },
   })
 <
+
+                                                *sl-fugitive-forges*
+Custom Forges ~
+
+The `forges` option lets |:SBrowse| work with any code hosting service.
+Each entry has a `match` pattern tested against the remote URL from
+`sl paths`, and a `url` template with `{path}`, `{rev}`, and `{lines}`
+placeholders. If no lines are selected, `?lines={lines}` is stripped
+automatically. Custom forges are tried first; standard GitHub/GitLab
+parsing is the fallback.
 
 For AI review support, add redline.nvim as a dependency:
 >lua
