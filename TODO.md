@@ -1,20 +1,17 @@
 # TODO
 
-## Core Sapling
-
-- [x] Rework `log.lua` around Sapling smartlog concepts instead of hg-style revs
-- [x] Add stack-aware actions: rebase, restack, split, fold
-- [x] Port annotate to real `sl annotate`
-- [x] Port browse and bookmark flows with Sapling-native assumptions
-- [x] Port describe and commit editors to real Sapling commands
-
-## Review Workflow
-
-- [ ] Reconnect `cR` everywhere meaningful in show/annotate/status/diff flows
-- [x] Improve diff metadata for review packets from commit/show buffers
-- [x] Add browse as a real Sapling surface
-
 ## Quality
 
 - [ ] Build repeatable tmp-repo validation for Sapling
 - [ ] Exercise the configured `command` path in tests
+
+## Review Workflow
+
+- [ ] Reconnect `cR` everywhere meaningful in show/annotate/status/diff flows
+
+## Known issues
+
+- [ ] `run_vcs` env handling replaces entire env for table args (latent — no caller triggers it)
+- [ ] `run_vcs_terminal` env keys not shell-escaped (low risk — keys are plugin-controlled)
+- [ ] Revision completion in `completion.lua` is uncached and synchronous — can freeze in large repos
+- [ ] `get_changeset_metadata` template parsing fragile if commit description contains literal newlines
