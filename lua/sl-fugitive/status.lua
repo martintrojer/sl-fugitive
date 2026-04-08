@@ -227,8 +227,6 @@ local function setup_keymaps(bufnr)
     M.refresh()
   end)
 
-
-
   ui.map(bufnr, "n", "gb", function()
     vim.cmd(ui.close_cmd())
     require("sl-fugitive").sl("bookmark")

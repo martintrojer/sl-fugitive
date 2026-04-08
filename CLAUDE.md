@@ -75,5 +75,7 @@ replayed implicitly.
 ## Development
 
 ```bash
-luac -p lua/sl-fugitive/*.lua plugin/sl-fugitive.lua
+luacheck lua/ plugin/             # lint
+stylua --check lua/ plugin/       # format check
+stylua lua/ plugin/               # format fix
 ```

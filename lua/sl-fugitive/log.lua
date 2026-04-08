@@ -63,7 +63,11 @@ end
 -- Define workspace status highlight groups once
 vim.api.nvim_set_hl(0, "SlWsClean", { default = true, bg = "#2d4f2d", fg = "#a3d9a3", bold = true })
 vim.api.nvim_set_hl(0, "SlWsDirty", { default = true, bg = "#4f4f2d", fg = "#d9d9a3", bold = true })
-vim.api.nvim_set_hl(0, "SlWsConflict", { default = true, bg = "#4f2d2d", fg = "#d9a3a3", bold = true })
+vim.api.nvim_set_hl(
+  0,
+  "SlWsConflict",
+  { default = true, bg = "#4f2d2d", fg = "#d9a3a3", bold = true }
+)
 
 local WS_HL_MAP = { clean = "SlWsClean", dirty = "SlWsDirty", conflict = "SlWsConflict" }
 
@@ -74,7 +78,9 @@ local function highlight_workspace_status(bufnr, status_line_nr, state)
     vim.api.nvim_buf_clear_namespace(bufnr, ws_ns, 0, -1)
     vim.api.nvim_buf_set_extmark(bufnr, ws_ns, status_line_nr, 0, {
       end_row = status_line_nr,
-      end_col = #(vim.api.nvim_buf_get_lines(bufnr, status_line_nr, status_line_nr + 1, false)[1] or ""),
+      end_col = #(
+          vim.api.nvim_buf_get_lines(bufnr, status_line_nr, status_line_nr + 1, false)[1] or ""
+        ),
       hl_group = hl,
       hl_eol = true,
     })
