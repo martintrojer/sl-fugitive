@@ -356,14 +356,17 @@ function M.setup_detail_keymaps(bufnr, review_ctx)
     elseif #files == 1 then
       local parent = ui.file_at_rev(files[1], rev)
       local current = ui.file_at_rev(files[1], rev .. "^")
+      local root = require("sl-fugitive").repo_root()
       ui.open_sidebyside(
         current,
         files[1] .. " (" .. rev .. "^)",
         parent,
         files[1] .. " (" .. rev .. ")",
-        files[1]
+        files[1],
+        { repo_root = root }
       )
     else
+      local root = require("sl-fugitive").repo_root()
       ui.select(files, "Side-by-side diff for", function(choice)
         if choice then
           local parent = ui.file_at_rev(choice, rev .. "^")
@@ -373,7 +376,8 @@ function M.setup_detail_keymaps(bufnr, review_ctx)
             choice .. " (" .. rev .. "^)",
             current,
             choice .. " (" .. rev .. ")",
-            choice
+            choice,
+            { repo_root = root }
           )
         end
       end)

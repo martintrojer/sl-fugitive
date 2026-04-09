@@ -168,19 +168,19 @@ local function setup_keymaps(bufnr)
   end
   pcall(vim.api.nvim_buf_set_var, bufnr, "sl_status_keymaps_set", true)
 
+  local repo_root = require("sl-fugitive").repo_root()
+
   ui.map(bufnr, "n", "<CR>", function()
     local file = file_at_cursor(bufnr)
     if file then
-      vim.cmd(ui.close_cmd())
-      vim.cmd("edit " .. vim.fn.fnameescape(file))
+      ui.open_file(file, repo_root)
     end
   end)
 
   ui.map(bufnr, "n", "o", function()
     local file = file_at_cursor(bufnr)
     if file then
-      vim.cmd(ui.close_cmd())
-      vim.cmd("split " .. vim.fn.fnameescape(file))
+      ui.open_file(file, repo_root, "split")
     end
   end)
 

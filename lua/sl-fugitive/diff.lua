@@ -44,7 +44,7 @@ local function setup_diff_keymaps(bufnr, filename, review_ctx)
 
   if filename then
     ui.map(bufnr, "n", "o", function()
-      vim.cmd("edit " .. vim.fn.fnameescape(filename))
+      ui.open_file(filename, require("sl-fugitive").repo_root())
     end)
   end
 
@@ -166,19 +166,14 @@ function M.show_sidebyside(filename)
   local ui = require("sl-fugitive.ui")
   local parent = ui.file_at_rev(filename, ".")
   local current = working_copy_file(filename)
-  local left, right = ui.open_sidebyside(
+  ui.open_sidebyside(
     parent,
     filename .. " (parent .)",
     current,
     filename .. " (working copy)",
-    filename
+    filename,
+    { repo_root = require("sl-fugitive").repo_root() }
   )
-
-  for _, buf in ipairs({ left, right }) do
-    ui.map(buf, "n", "o", function()
-      vim.cmd("edit " .. vim.fn.fnameescape(filename))
-    end)
-  end
 end
 
 return M
