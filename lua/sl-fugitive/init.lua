@@ -309,6 +309,16 @@ function M.refresh_views()
   end)
 end
 
+function M.undo()
+  local result = M.run_vcs({ "undo" })
+  if result then
+    vim.notify("Undid last sl operation", vim.log.levels.INFO)
+    M.refresh_views()
+    return true
+  end
+  return false
+end
+
 function M.complete(arglead, cmdline, cursorpos)
   return require("sl-fugitive.completion").complete(arglead, cmdline, cursorpos)
 end

@@ -226,6 +226,11 @@ local function setup_keymaps(bufnr)
   end)
 
   local init = require("sl-fugitive")
+
+  ui.map(bufnr, "n", "gu", function()
+    init.undo()
+  end)
+
   ui.setup_view_keymaps(bufnr, {
     log = function()
       vim.cmd(ui.close_cmd())
@@ -261,6 +266,7 @@ local function setup_keymaps(bufnr)
         "",
         "Other:",
         "  indented lines show copy sources",
+        "  gu       Undo last sl operation",
         "  R        Refresh",
         "  q        Close",
         "  g?       This help",
