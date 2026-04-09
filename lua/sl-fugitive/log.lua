@@ -71,10 +71,10 @@ local function highlight_workspace_status(bufnr, status_line_nr, state)
     { default = true, bg = "#4f4f2d", fg = "#d9d9a3", bold = true }
   )
   vim.api.nvim_set_hl(
-      0,
-      "SlWsConflict",
-      { default = true, bg = "#4f2d2d", fg = "#d9a3a3", bold = true }
-    )
+    0,
+    "SlWsConflict",
+    { default = true, bg = "#4f2d2d", fg = "#d9a3a3", bold = true }
+  )
   local hl = WS_HL_MAP[state]
   if hl and status_line_nr then
     vim.api.nvim_buf_clear_namespace(bufnr, ws_ns, 0, -1)

@@ -74,7 +74,12 @@ replayed implicitly.
 ## Development
 
 ```bash
-luacheck lua/ plugin/             # lint
-stylua --check lua/ plugin/       # format check
-stylua lua/ plugin/               # format fix
+luacheck lua/ plugin/                        # lint
+stylua --check lua/ plugin/                  # format check
+stylua lua/ plugin/                          # format fix
+nvim --headless -u tests/init.lua            # run tests
 ```
+
+Tests use [mini.test](https://github.com/echasnovski/mini.nvim/blob/main/readmes/mini-test.md).
+Requires `fugitive-core.nvim` as a sibling directory for local test runs.
+CI runs lint, format check, and tests via GitHub Actions.

@@ -30,20 +30,8 @@ local function run_and_refresh(args, msg)
 end
 
 local function format_lines(output)
-  local lines = {
-    "",
-    "# sl Bookmarks",
-    "# Press g? for help",
-    "",
-  }
-  local saw = false
-  for _, line in ipairs(vim.split(output or "", "\n", { plain = true })) do
-    if line ~= "" then
-      saw = true
-      table.insert(lines, line)
-    end
-  end
-  if not saw then
+  local lines = core_list.format_lines("sl Bookmarks", output or "")
+  if #lines == 4 then
     table.insert(lines, "no bookmarks set")
   end
   return lines
