@@ -213,7 +213,9 @@ local function setup_keymaps(bufnr)
     end
     local status = status_code_from_line(vim.api.nvim_get_current_line())
     if status == "?" then
-      ui.warn("Use normal file deletion for untracked files")
+      if ui.delete_file(file, require("sl-fugitive").repo_root()) then
+        M.refresh()
+      end
       return
     end
     if ui.confirm("Revert " .. file .. " to parent revision") then
@@ -222,6 +224,13 @@ local function setup_keymaps(bufnr)
         ui.info("Reverted: " .. file)
         M.refresh()
       end
+    end
+  end)
+
+  ui.map(bufnr, "n", "dd", function()
+    local file = file_at_cursor(bufnr)
+    if file and ui.delete_file(file, require("sl-fugitive").repo_root()) then
+      M.refresh()
     end
   end)
 
@@ -258,7 +267,8 @@ local function setup_keymaps(bufnr)
         "  gR       Open review buffer",
         "  d        Show diff for file",
         "  D        Side-by-side diff",
-        "  x        Revert file to parent revision",
+        "  x        Revert file (or delete if untracked)",
+        "  dd       Delete file from filesystem",
         "",
         "Views:",
         "  gb       Switch to bookmark view",
