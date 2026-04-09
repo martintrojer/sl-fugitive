@@ -10,7 +10,7 @@ local last_repo_root = nil
 
 function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", M.config, opts or {})
-  require("fugitive-core").setup(nil, M.config)
+  require("fugitive-core").setup(M.config)
 
   local has_redline, redline = pcall(require, "redline")
   if has_redline then
@@ -135,7 +135,7 @@ function M.run_vcs(args, opts)
     return nil
   end
 
-  local result = run_with_feedback(cmd, sys_opts, "sl")
+  local result = run_with_feedback(cmd, sys_opts, executable)
   if result.code ~= 0 then
     local err_msg = result.stderr or ""
     if err_msg:match("^%s*$") then

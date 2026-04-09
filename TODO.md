@@ -1,10 +1,5 @@
 # TODO
 
-## Bugs
-
-- [ ] Side-by-side diff in `show_changeset` has parent/current swapped for single-file case
-- [ ] `run_with_feedback` label hardcoded to `"sl"` instead of `M.config.command`
-
 ## Architecture
 
 - [ ] `log.lua` is 580+ lines — mutation functions follow identical patterns, table-driven dispatch would cut boilerplate

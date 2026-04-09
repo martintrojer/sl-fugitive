@@ -354,8 +354,8 @@ function M.setup_detail_keymaps(bufnr, review_ctx)
     if #files == 0 then
       ui.warn("No files changed")
     elseif #files == 1 then
-      local parent = ui.file_at_rev(files[1], rev)
-      local current = ui.file_at_rev(files[1], rev .. "^")
+      local parent = ui.file_at_rev(files[1], rev .. "^")
+      local current = ui.file_at_rev(files[1], rev)
       local root = require("sl-fugitive").repo_root()
       ui.open_sidebyside(
         current,
