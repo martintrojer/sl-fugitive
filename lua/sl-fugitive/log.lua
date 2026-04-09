@@ -58,27 +58,23 @@ local function workspace_status()
 end
 
 local WS_HL_MAP = { clean = "SlWsClean", dirty = "SlWsDirty", conflict = "SlWsConflict" }
-local ws_hl_defined = false
 
 local function highlight_workspace_status(bufnr, status_line_nr, state)
-  if not ws_hl_defined then
-    vim.api.nvim_set_hl(
-      0,
-      "SlWsClean",
-      { default = true, bg = "#2d4f2d", fg = "#a3d9a3", bold = true }
-    )
-    vim.api.nvim_set_hl(
-      0,
-      "SlWsDirty",
-      { default = true, bg = "#4f4f2d", fg = "#d9d9a3", bold = true }
-    )
-    vim.api.nvim_set_hl(
+  vim.api.nvim_set_hl(
+    0,
+    "SlWsClean",
+    { default = true, bg = "#2d4f2d", fg = "#a3d9a3", bold = true }
+  )
+  vim.api.nvim_set_hl(
+    0,
+    "SlWsDirty",
+    { default = true, bg = "#4f4f2d", fg = "#d9d9a3", bold = true }
+  )
+  vim.api.nvim_set_hl(
       0,
       "SlWsConflict",
       { default = true, bg = "#4f2d2d", fg = "#d9a3a3", bold = true }
     )
-    ws_hl_defined = true
-  end
   local hl = WS_HL_MAP[state]
   if hl and status_line_nr then
     vim.api.nvim_buf_clear_namespace(bufnr, ws_ns, 0, -1)

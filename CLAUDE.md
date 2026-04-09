@@ -42,8 +42,7 @@ lua/sl-fugitive/
 ├── browse.lua        # Forge URL construction from `sl paths`
 ├── describe.lua      # Describe and commit editor buffers
 ├── completion.lua    # Smart tab completion for :S
-├── ansi.lua          # ANSI color handling
-└── ui.lua            # Shared UI helpers
+└── ui.lua            # Thin wrapper over fugitive-core.ui + file_at_rev
 
 plugin/sl-fugitive.lua  # Registers :S and :SBrowse
 ```
